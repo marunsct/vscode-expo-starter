@@ -2,71 +2,23 @@
 import NetInfo from '@react-native-community/netinfo';
 import * as SQLite from 'expo-sqlite';
 import { syncPendingActions } from '../features/backend/syncDevicetoDB';
-
+import SQliteQuery from './SQLiteQuery';
+// Check if the 'openDatabaseSync' method is available in the current version of expo-sqlite
 if (!SQLite.openDatabaseSync) {
   throw new Error("The 'openDatabaseSync' method is not available in the current version of expo-sqlite.");
 }
 
+// Open the database
 export const db = SQLite.openDatabaseSync('expenseBook.db');
 
+// Initialize the database
 export const initializeDatabase = async () => {
-  // await db.withTransactionAsync(async () => {
   console.log('Initializing database...');
   try {
     // Check if the database is already initialized
-    const queries = [
-      `CREATE TABLE IF NOT EXISTS users (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        userId TEXT UNIQUE,
-        username TEXT,
-        first_name TEXT,
-        last_name TEXT,
-        email TEXT,
-        gender TEXT,
-        phone TEXT,
-        country TEXT,
-        profile_picture TEXT,
-        date_of_birth TEXT,
-        token TEXT
-      );`,
-      `CREATE TABLE IF NOT EXISTS friends (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        userId TEXT UNIQUE,
-        username TEXT,
-        first_name TEXT,
-        last_name TEXT,
-        email TEXT,
-        phone TEXT
-      );`,
-      `CREATE TABLE IF NOT EXISTS balance (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        userId TEXT UNIQUE,
-        name TEXT,
-        image_url TEXT,
-        user_name TEXT,
-        currency TEXT,
-        balance REAL
-      );`,
-      `CREATE TABLE IF NOT EXISTS expenses (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        userId TEXT,
-        amount REAL,
-        currency TEXT,
-        date TEXT,
-        description TEXT,
-        image_url TEXT,
-        FOREIGN KEY (userId) REFERENCES users (userId)
-      );`,
-      `CREATE TABLE IF NOT EXISTS sync_queue (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        action TEXT, -- 'add', 'update', 'delete'
-        entity TEXT, -- e.g., 'expense', 'friend'
-        url TEXT, -- URL for the API endpoint
-        options TEXT, -- JSON string of the request options with headers and body
-        created_at TEXT
-      );`
-    ];
+    const queries = SQliteQuery;
 
+    // Execute the queries
     for (const query of queries) {
       await db.execAsync(query);
     }
@@ -76,9 +28,9 @@ export const initializeDatabase = async () => {
 
   }
 
-  // });
 };
 
+// Save user to the database
 export const saveUser = async (user: { id: string; username: string; first_name: string; last_name: string; email: string; gender: string; phone: string; country: string; profile_picture: string; date_of_birth: string; token: string }) => {
   console.log('Saving user to DB...', user);
   try {
@@ -95,6 +47,7 @@ export const saveUser = async (user: { id: string; username: string; first_name:
   }
 };
 
+// Save friends to the database
 export const saveFriends = async (friends: { id: string; first_name: string; last_name: string; username: string; phone: string; email: string }[]) => {
   await db.withTransactionAsync(async () => {
     for (const friend of friends) {
@@ -105,12 +58,19 @@ export const saveFriends = async (friends: { id: string; first_name: string; las
     }
   });
 };
+// Get friends from the database
+// Export a constant function called getFriends that returns a Promise of an array of any type
 export const getFriends = async (): Promise<any[]> => {
+  // Initialize an empty array to store friends
   let friends: any[] = [];
   try {
+    // Log a message to the console indicating that friends are being fetched from the DB
     console.log('Fetching friends from DB...');
+    // Use a transaction to fetch all friends from the DB
     await db.withTransactionAsync(async () => {
+      // Execute a SQL query to select all friends from the friends table
       const result = await db.getAllAsync(`SELECT * FROM friends;`);
+      // Store the result in the friends array
       friends = result;
     });
   } catch (error) {
@@ -200,7 +160,34 @@ export const queueSyncAction = async (
   }
 };
 
+/**
+ * Asynchronously saves an array of group objects.
+ * 
+ * Each group object in the array should have the following structure:
+ * - `id`: A unique identifier for the group (string).
+ * - `name`: The name of the group (string).
+ * - `members`: An array of strings representing the members of the group.
+ * 
+ * @param {Array<{ id: string; name: string; members: string[] }>} groups - An array of group objects to be saved.
+ * 
+ * @returns {Promise<void>} A promise that resolves when the groups have been successfully saved.
+ */
+export const saveGroups = async (groups: { id: string; name: string; members: string[] }[]) => {};
 
+
+
+/**
+ * Converts an array of balance items to a format with separate arrays for
+ * the total balance and the user balance.
+ *
+ * @param {Array<{ id: string; userId: string; name: string; currency: string; balance: number }>} data
+ *   The array of balance items to convert.
+ * @returns {{ totalBalance: { Amount: number; Currency: string }[]; userBalance: { id: string; name: string; balances: { currency: string; amount: number }[] }[] }}
+ *   An object with two properties: `totalBalance` and `userBalance`. `totalBalance` is an array of objects
+ *   with the properties `Amount` and `Currency`, representing the total balance broken down by currency.
+ *   `userBalance` is an array of objects with the properties `id`, `name`, and `balances`, representing the
+ *   balance broken down by user.
+ */
 const convertToBalanceFormat = async (data: { id: string; userId: string; name: string; currency: string; balance: number }[]) =>{
   // Group by user for userBalance
   const userMap: Record<string, { id: string; name: string; balances: { currency: string; amount: number }[] }> = {};

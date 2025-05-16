@@ -1,7 +1,18 @@
 {
+    "terminal.integrated.defaultProfile.windows": "PowerShell",
+  "terminal.integrated.profiles.windows": {
+    "Node.js (22)": {
+      "path": "C:\\Users\\9004079073\\AppData\\Roaming\\nodejs_22\\node.exe",
+      "args": []
+    }
+  },
   "editor.codeActionsOnSave": {
     "source.fixAll": "explicit",
     "source.organizeImports": "explicit",
     "source.sortMembers": "explicit"
-  }
+  },
+  "Codegeex.RepoIndex": true,
+  "cSpell.words": [
+    "AUTOINCREMENT"
+  ]
 }
