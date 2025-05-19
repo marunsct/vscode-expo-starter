@@ -9,7 +9,7 @@ import { useTheme } from '../ThemeContext'; // Import the theme context
 import Account from './account';
 import Settings from './settings';
 
-'../../features/backend/initialDataAPIFetch';
+//import  from '../../../features/backend/initialDataAPIFetch';
 const Drawer = createDrawerNavigator();
 
 export default function AuthenticatedLayout() {

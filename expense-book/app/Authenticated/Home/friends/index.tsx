@@ -1,7 +1,13 @@
+import { Ionicons } from '@expo/vector-icons';
+import { Link, router } from 'expo-router';
 import React, { useEffect, useState } from 'react';
-import { FlatList, StyleSheet, Text, View } from 'react-native';
+import { FlatList, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { useSelector } from 'react-redux';
-import { useTheme } from '../../ThemeContext';
+// Update the import path below to the correct location of ThemeContext in your project
+import { Button } from '@react-navigation/elements';
+import { useTheme } from '../../../ThemeContext';
+// If ThemeContext is located elsewhere, adjust the path accordingly, e.g.:
+// import { useTheme } from '../../../common/ThemeContext';
 
 // Helper to get currency symbol
 const getCurrencySymbol = (currency: string) => {
@@ -69,7 +75,7 @@ export default function Friends() {
     }
     settotBalance(Balance);
     console.log('Total balance loaded in Friends:', Balance);
-  }, [Balance]);
+  }, [Balance, user]);
 
   // Prepare "You Owe" and "You are Owed" lists
   const youOwe = totBalance.totalBalance
@@ -153,6 +159,25 @@ export default function Friends() {
         contentContainerStyle={styles.listContainer}
         ItemSeparatorComponent={() => <View style={styles.separator} />}
       />
+      {/* Floating "+" button */}
+      <TouchableOpacity
+        style={styles.fab}
+        onPress={() => {
+            console.log('Floating button pressed1');
+            router.push('/Authenticated/Home/friends/add-expense'); // absolute path!
+          }}
+      >
+        <Ionicons name="add" size={32} color="#fff" style={{ alignSelf: 'center' }} />
+      </TouchableOpacity>
+      <Link
+        href="/Authenticated/Home/friends/add-expense" push asChild >
+            <Button
+              color={theme.colors.primary} // Apply theme color to the button
+              style={{ marginTop: 16 }} // Add some margin for spacing
+            >
+              Go
+            </Button>
+            </Link>
     </View>
   );
 }
@@ -239,5 +264,21 @@ const styles = StyleSheet.create({
     height: 0.5, // reduced by 50%
     backgroundColor: '#e0e0e0',
     marginLeft: 48, // aligns with text, not avatar
+  },
+  fab: {
+    position: 'absolute',
+    right: 24,
+    bottom: 32,
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    backgroundColor: '#2ecc40', // green
+    alignItems: 'center',
+    justifyContent: 'center',
+    elevation: 5, // for Android shadow
+    shadowColor: '#000', // for iOS shadow
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.3,
+    shadowRadius: 4,
   },
 });

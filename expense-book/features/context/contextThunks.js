@@ -1,4 +1,4 @@
-import { setExpenses, setFriends, setTotalExpenses, setUser } from './contextSlice';
+import { setExpenses, setFriends, setGroups, setTotalExpenses, setUser } from './contextSlice';
 
 export const setUserAndGetState = (user) => async (dispatch, getState) => {
   dispatch(setUser(user));
@@ -19,3 +19,8 @@ export const setTotalExpensesAndGetState = (totalExpenses) => async (dispatch, g
   dispatch(setTotalExpenses(totalExpenses));
   return getState().context.totalExpenses;
 };
+
+export const setGroupsAndGetState = (groups) => async (dispatch, getState) => {
+  dispatch(setGroups(groups));
+  return getState().context.groups;
+}

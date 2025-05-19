@@ -1,7 +1,7 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { fetchWithAuth } from '../../app/authContext';
-import { getBalance, getFriends, saveBalance, saveExpenses, saveExpenseSplits, saveFriends, saveGroupMembers, saveGroups } from '../../database/db';
-import { setFriends, setTotalExpenses } from '../context/contextSlice';
+import { getBalance, getFriends, getUserGroupsWithBalance, saveBalance, saveExpenses, saveExpenseSplits, saveFriends, saveGroupMembers, saveGroups } from '../../database/db';
+import { setFriends, setGroups, setTotalExpenses } from '../context/contextSlice';
 
 // Accept dispatch and user as arguments
 // Function to fetch initial data from the API, including friends, balance, and groups
@@ -18,9 +18,19 @@ const fetchApiData = async (dispatch, user) => {
     // Log the updated last login date
     console.log('Updated last login:', new Date().toISOString());
     // Fetch all data and save it to the database
-    fetchAllDataAndSave(user, lastLogin, dispatch);
+    fetchAllDataAndSave(user, lastLogin, dispatch).then(async(result) => { 
+      if (result) {
+        console.log('Fetched balance data successfully');
+        // Dispatch the total expenses to the Redux store
+      } else {
+        console.log('No balance data to fetch dispatching group to redux');
+        const groups = await getUserGroupsWithBalance(parseInt(user.userId));
+        console.log('Fetched groups data:', groups);
+        dispatch(setGroups(groups));
+      }
+    });
     // Fetch friends data
-    fetchFriendsData(user, lastLogin, dispatch);
+    await fetchFriendsData(user, lastLogin, dispatch);
     // Fetch balance data
     fetchBalanceData(user, dispatch);
     // Fetch groups data
@@ -69,7 +79,7 @@ const fetchBalanceData = async (user, dispatch) => {
       // Parse the response as JSON
       const data = await fetchBalanceSRV.json();
       // Log the fetched balance data
-      console.log('Fetched balance:', data.length, user.userId);
+      console.log('Fetched balance:', data.length, user.userId, data);
       // Check if there is any data
       if (data.length > 0) {
         // Save the balance data
@@ -110,11 +120,19 @@ const fetchBalanceData = async (user, dispatch) => {
       // Parse the response as JSON
       const data = await fetchAllSRV.json();
       // Log the fetched all data
-      console.log('Fetched all data:', data, user.userId);
+      console.log('Fetched all data:', user.userId);
       // Check if there is any data
       if (data.Groups.length > 0) {
         // Save the all data
-        await saveGroups(data.Groups);
+         saveGroups(data.Groups).then(async () => {
+          console.log('Sending Groups data to redux');
+          // Dispatch the Groups data to the Redux store
+          dispatch(setGroups(await getUserGroupsWithBalance(parseInt(user.userId))));
+          console.log('Groups data sent to redux');
+        }
+        ).catch((error) => {
+          console.error('Error saving groups data:', error);
+        });
       }else {
         console.log('No new groups data to save');
       }
@@ -136,13 +154,16 @@ const fetchBalanceData = async (user, dispatch) => {
       }else {
         console.log('No new expense splits data to save');
       }
+      return true;
     } else {
       // Log any errors that occur
       console.log('No User Found: API error', fetchAllSRV);
+      return false;
     }
   } catch (error) {
     // Log any errors that occur
     console.error('Error fetching All data:', error);
+    return false;
   }
 };
 

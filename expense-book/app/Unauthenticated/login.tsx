@@ -1,4 +1,3 @@
-import { setUser } from '@/features/context/contextSlice';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as LocalAuthentication from 'expo-local-authentication';
 import { useRouter } from 'expo-router';
@@ -7,6 +6,7 @@ import { Alert, Button, Keyboard, KeyboardAvoidingView, Platform, Pressable, Scr
 import { useDispatch } from 'react-redux';
 import { getUser, saveUser } from '../../database/db'; // Adjust the import path as necessary
 import fetchApiData from '../../features/backend/initialDataAPIFetch';
+import { setUser } from '../../features/context/contextSlice';
 import { useTheme } from '../ThemeContext';
 import { fetchWithoutAuth, setToken } from '../authContext';
 

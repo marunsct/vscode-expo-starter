@@ -41,12 +41,12 @@ const SQLiteQuery = [
         split_method TEXT,
         paid_by INTEGER,  -- foreign key to users table
         image_url TEXT,
-        is_settled BOOLEAN DEFAULT false,
+        is_settled BOOLEAN DEFAULT 0,
         created_by INTEGER, -- foreign key to users table
         created_at TEXT,
         updated_by INTEGER, -- foreign key to users table
         updated_at TEXT,
-        is_deleted BOOLEAN DEFAULT false,
+        is_deleted BOOLEAN DEFAULT 0,
         deleted_at TEXT,  
         FOREIGN KEY (created_by) REFERENCES users (userId),
         FOREIGN KEY (updated_by) REFERENCES users (userId),
@@ -67,7 +67,7 @@ const SQLiteQuery = [
         currency TEXT,
         name TEXT,
         image_url TEXT,
-        is_deleted BOOLEAN DEFAULT false,
+        is_deleted BOOLEAN DEFAULT 0,
         deleted_at TEXT,
         created_at TEXT,
         created_by INTEGER, -- foreign key to users table
@@ -88,7 +88,7 @@ const SQLiteQuery = [
         phone TEXT,
         created_by INTEGER,
         joined_at TEXT, -- timestamp
-        is_deleted BOOLEAN DEFAULT false,
+        is_deleted BOOLEAN DEFAULT 0,
         deleted_at TEXT,
         FOREIGN KEY (created_by) REFERENCES users (userId),
         FOREIGN KEY (groupId) REFERENCES groups (id),
@@ -103,12 +103,12 @@ const SQLiteQuery = [
         paid_to_user INTEGER,-- foreign key to users table
         amount REAL,
         counter REAL,
-        is_settled BOOLEAN DEFAULT false,
+        is_settled BOOLEAN DEFAULT 0,
         created_at TEXT,
         created_by INTEGER, -- foreign key to users table
         updated_at TEXT,
         updated_by INTEGER, -- foreign key to users table
-        is_deleted BOOLEAN DEFAULT false,
+        is_deleted BOOLEAN DEFAULT 0,
         deleted_at TEXT,
         FOREIGN KEY (expenseId) REFERENCES expenses (expenseId),
         FOREIGN KEY (created_by) REFERENCES users (userId),

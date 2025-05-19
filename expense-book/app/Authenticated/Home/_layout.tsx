@@ -1,10 +1,10 @@
-import { Ionicons } from '@expo/vector-icons'; // Import Ionicons for icons
-import { Tabs } from 'expo-router';
+import { Ionicons } from '@expo/vector-icons';
+import { Slot, Tabs } from 'expo-router';
 import { useEffect } from 'react';
 import { useSelector } from 'react-redux';
 import { useTheme } from '../../ThemeContext'; // Import the theme context
 
-export default function TabLayout() {
+export default function HomeLayout() {
   const theme = useTheme(); // Access the theme
   const user = useSelector((state:any) => state.context.user)
  // const dispatch = useDispatch()
@@ -21,27 +21,26 @@ export default function TabLayout() {
   return (
     <Tabs
       screenOptions={{
-        tabBarStyle: { backgroundColor: theme.colors.background }, // Tab bar background color
-        tabBarActiveTintColor: theme.colors.primary, // Active tab icon color
-        tabBarInactiveTintColor: theme.colors.textSecondary, // Inactive tab icon color
+        tabBarStyle: { backgroundColor: theme.colors.background },
+        tabBarActiveTintColor: theme.colors.primary,
+        tabBarInactiveTintColor: theme.colors.textSecondary,
       }}
     >
       <Tabs.Screen
         name="personal"
         options={{
           headerShown: false,
-          title: "Personal",
+          title: 'Personal',
           tabBarIcon: ({ color, size }) => (
             <Ionicons name="person-outline" color={color} size={size} />
           ),
         }}
       />
-
       <Tabs.Screen
         name="friends"
         options={{
-          title: "Friends",
           headerShown: false,
+          title: 'Friends',
           tabBarIcon: ({ color, size }) => (
             <Ionicons name="people-outline" color={color} size={size} />
           ),
@@ -50,8 +49,8 @@ export default function TabLayout() {
       <Tabs.Screen
         name="groups"
         options={{
-          title: "Groups",
           headerShown: false,
+          title: 'Groups',
           tabBarIcon: ({ color, size }) => (
             <Ionicons name="chatbubbles-outline" color={color} size={size} />
           ),
@@ -60,13 +59,19 @@ export default function TabLayout() {
       <Tabs.Screen
         name="accountant"
         options={{
-          title: "Accountant",
           headerShown: false,
+          title: 'Accountant',
           tabBarIcon: ({ color, size }) => (
             <Ionicons name="calculator-outline" color={color} size={size} />
           ),
         }}
       />
+      {/* Removed _add-expense modal tab. Use (modals)/add-expense for modal navigation. */}
     </Tabs>
   );
-}
+
+  function FriendsWrapper() {
+  return <Slot />;
+
+// Removed FriendsWrapper as it is not needed for Tabs.Screen
+  }}

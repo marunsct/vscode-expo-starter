@@ -29,11 +29,15 @@ export const fetchContext = createSlice({
     },
     setTotalExpenses: (state, action) => {
       state.totalExpenses = action.payload;
-    }
+    },
+    setGroups: (state, action) => {
+      console.log("groups in slice", action.payload);
+      state.groups = action.payload;
+    },
   },
 })
 
 // Action creators are generated for each case reducer function
-export const {setExpenses, setFriends, setTotalExpenses, setUser } = fetchContext.actions
+export const {setExpenses, setFriends, setTotalExpenses, setUser, setGroups } = fetchContext.actions
 
 export default fetchContext.reducer

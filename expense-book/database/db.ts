@@ -201,7 +201,6 @@ export const saveGroups = async (
   }[]
 ) => {
   try {
-  
       for (const group of groups) {
         await db.runAsync(
           `INSERT OR REPLACE INTO groups (
@@ -215,12 +214,11 @@ export const saveGroups = async (
             group.created_at,
             group.updated_by,
             group.updated_at,
-            group.delete_flag ? true : false,
+            group.delete_flag ? 1 : 0, // convert to 1/0
             group.deleted_at,
           ]
         );
       }
- 
     console.log('Group(s) saved successfully');
   } catch (error) {
     console.error('Error saving group(s):', error);
@@ -240,11 +238,10 @@ export const saveGroupMembers = async (
     joined_at: string;
     delete_flag: boolean;
     deleted_at?: string | null;
-    created_by?: number; // Optional, if you want to support it
+    created_by?: number;
   }[]
 ) => {
   try {
-  
       for (const member of groupMembers) {
         await db.runAsync(
           `INSERT OR REPLACE INTO group_members (
@@ -261,22 +258,17 @@ export const saveGroupMembers = async (
             member.phone,
             member.created_by ?? null,
             member.joined_at,
-            member.delete_flag ? 1 : 0,
+            member.delete_flag ? 1 : 0, // convert to 1/0
             member.deleted_at ?? null,
           ]
         );
       }
-
     console.log('Group member(s) saved successfully');
   } catch (error) {
     console.error('Error saving group member(s):', error);
   }
 };
 
-/**
- * Saves or updates an expense in the expenses table.
- * @param expense An expense object or array of expense objects.
- */
 export const saveExpenses = async (
   expense:
     | {
@@ -316,7 +308,6 @@ export const saveExpenses = async (
 ) => {
   const expenses = Array.isArray(expense) ? expense : [expense];
   try {
-    
       for (const exp of expenses) {
         await db.runAsync(
           `INSERT OR REPLACE INTO expenses (
@@ -331,17 +322,16 @@ export const saveExpenses = async (
             exp.split_method,
             exp.paid_by_user,
             exp.image_url,
-            exp.flag ? true : false,
+            exp.flag ? 1 : 0, // convert to 1/0
             exp.created_by,
             exp.created_at,
             exp.updated_by,
             exp.updated_at,
-            exp.delete_flag ? true : false,
+            exp.delete_flag ? 1 : 0, // convert to 1/0
             exp.deleted_at,
           ]
         );
       }
-  
     console.log('Expense(s) saved successfully');
   } catch (error) {
     console.error('Error saving expense(s):', error);
@@ -365,11 +355,10 @@ export const saveExpenseSplits = async (
   }[]
 ) => {
   try {
-    
       for (const split of expenseSplits) {
         await db.runAsync(
           `INSERT OR REPLACE INTO expense_splits (
-            id, expenseId, userId, paid_to_user, amount, counter, is_settled, created_at, updated_by, updated_at, is_deleted, deleted_at
+            split_id, expenseId, userId, paid_to_user, amount, counter, is_settled, created_at, updated_by, updated_at, is_deleted, deleted_at
           ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);`,
           [
             split.id,
@@ -378,16 +367,15 @@ export const saveExpenseSplits = async (
             split.paid_to_user,
             split.share,
             split.counter,
-            split.flag ? true : false,
+            split.flag ? 1 : 0, // convert to 1/0
             split.created_at,
             split.updated_by,
             split.updated_at,
-            split.delete_flag ? true : false,
+            split.delete_flag ? 1 : 0, // convert to 1/0
             split.deleted_at,
           ]
         );
       }
-   
     console.log('Expense split(s) saved successfully');
   } catch (error) {
     console.error('Error saving expense split(s):', error);
@@ -572,5 +560,82 @@ export const deleteAllTables = async () => {
     console.log('All tables deleted successfully');
   } catch (error) {
     console.error('Error deleting tables:', error);
+  }
+};
+
+/**
+ * Fetch groups for a user and calculate their total balance in each group.
+ * Only includes groups and group memberships that are not deleted,
+ * and only considers expenses/splits that are not deleted or settled.
+ *
+ * @param userId The user's ID
+ * @returns Array of groups with { id, name, currency, balance }
+ */
+export const getUserGroupsWithBalance = async (userId: number): Promise<
+  { id: string; name: string; balance: number; currency: string }[]
+> => {
+  try {
+
+    console.log("before selecting groups",userId);
+    // 1. Get all groups where user is a member and not deleted
+    const groups: { id: string; name: string; currency: string }[] = await db.getAllAsync(
+      `SELECT g.groupId AS id, g.name, g.currency
+       FROM groups g
+       INNER JOIN group_members gm ON g.groupId = gm.groupId
+       WHERE  gm.userId = ? AND g.is_deleted = 0 AND gm.is_deleted = 0;`,
+      [userId]
+    );
+    console.log('Groups:', groups);
+    // Initialize result array
+    const result: { id: string; name: string; balance: number; currency: string }[] = [];
+
+    for (const group of groups) {
+      // 2. Get all expenses for this group that are not deleted or settled
+      const expenses: { expenseId: number; amount: number; currency: string; paid_by: number }[] = await db.getAllAsync(
+        `SELECT expenseId, amount, currency, paid_by
+         FROM expenses
+         WHERE groupId = ? AND is_deleted = 0 AND is_settled = 0`,
+        [group.id]
+      );
+      console.log('Expenses:', expenses);
+      let balance = 0;
+
+      for (const expense of expenses) {
+        // 3. Get all splits for this expense that are not deleted or settled
+        const splits: { userId: number; paid_to_user: number; amount: number }[] = await db.getAllAsync(
+          `SELECT userId, paid_to_user, amount
+           FROM expense_splits
+           WHERE expenseId = ? AND is_deleted = 0 AND is_settled = 0
+           AND userId != paid_to_user AND (userId = ? OR paid_to_user = ?)`,
+          [expense.expenseId, userId, userId]
+        );
+
+        console.log('Splits:', splits);
+        // 4. Calculate user's share and paid amount for this expense
+        splits.forEach((s) => { 
+          if (s.userId === userId) {
+            balance -= s.amount;
+            console.log('User owes:', s.amount);
+          }else if (s.paid_to_user === userId) {
+            balance += s.amount;
+            console.log('User is owed:', s.amount);
+          }
+        });
+        // User's net for this expense: paid - share
+        //balance += paidByUser - userShare;
+      }
+
+      result.push({
+        id: String(group.id),
+        name: group.name,
+        balance,
+        currency: group.currency,
+      });
+    }
+    console.log(result);
+    return result;
+  } catch (error) {
+    console.error('Error fetching user groups with balance:', error);
+    return [];
   }
 };

@@ -11,7 +11,7 @@ export default function Account() {
     router.replace('/Unauthenticated/login'); // Redirect to login screen
     removeToken(); // Clear the token
    await clearUserData(); // Clear user data from the database
-   // await deleteAllTables(); // Delete all tables from the database
+  // await deleteAllTables(); // Delete all tables from the database
     // Redirect to login screen
   };
   return (
