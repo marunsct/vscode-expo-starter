@@ -5,12 +5,14 @@ import { useRouter } from 'expo-router';
 import React, { useEffect } from 'react';
 import { Alert, StyleSheet, Text, View } from 'react-native';
 import { Provider, useDispatch, useSelector } from 'react-redux';
+import ExpenseBookIcon from '../assets/images/expense-book-icon.svg'; // adjust path as needed
 import { getUser, initializeDatabase } from '../database/db';
 import fetchApiData from '../features/backend/initialDataAPIFetch';
+import { syncPendingActions } from '../features/backend/syncDevicetoDB';
 import { setUserAndGetState } from '../features/context/contextThunks';
 import { getApiKey } from './authContext';
 import { store } from './store';
-import {syncPendingActions} from '../features/backend/syncDevicetoDB';
+import useDataSync from './useDataSync'; // <-- Add this import
 
 function AppContent() {
   const router = useRouter();
@@ -19,18 +21,16 @@ function AppContent() {
 
   const setUserInRedux = async () => {
     try {
+      let reduxUser = user;
       if (!user.userId && !user.user_id) {
         const dbUser = await getUser();
         if (dbUser) {
-          console.log('User found in DB:', dbUser.userId || dbUser.user_id);
-          // Set user in Redux store and get updated user
-          const reduxUser = await dispatch<any>(setUserAndGetState(dbUser));
-          console.log('User sent to Redux:', reduxUser.userId || reduxUser.user_id);
-          // Fetch API data after setting user in Redux
-          await fetchApiData(dispatch, reduxUser);
-        } else {
-          await fetchApiData(dispatch, user);
+          reduxUser = await dispatch<any>(setUserAndGetState(dbUser));
         }
+      }
+      // Always fetch API data for the user
+      if (reduxUser && (reduxUser.userId || reduxUser.user_id)) {
+        await fetchApiData(dispatch, reduxUser);
       }
     } catch (error) {
       console.error('Error fetching user:', error);
@@ -39,52 +39,43 @@ function AppContent() {
 
   useEffect(() => {
     const checkLoginStatus = async () => {
-      console.log('opening DB...');
-      await initializeDatabase(); // Initialize the database
-
-      const token = await AsyncStorage.getItem('token'); // Check if token exists
-      const useBiometric = await AsyncStorage.getItem('useBiometric'); // Check if biometric is enabled
-
+      await initializeDatabase();
+      const token = await AsyncStorage.getItem('token');
+      const useBiometric = await AsyncStorage.getItem('useBiometric');
       if (token) {
         await getApiKey(token);
-        await setUserInRedux(); // Fetch the API key and set user
-
+        await setUserInRedux();
         if (useBiometric === 'true') {
-          // Perform biometric authentication
           const hasBiometricHardware = await LocalAuthentication.hasHardwareAsync();
           const isBiometricEnrolled = await LocalAuthentication.isEnrolledAsync();
           const supportedBiometrics = await LocalAuthentication.supportedAuthenticationTypesAsync();
-
           if (hasBiometricHardware && isBiometricEnrolled) {
-            // Check if Face ID is supported
             const isFaceIDSupported = supportedBiometrics.includes(
               LocalAuthentication.AuthenticationType.FACIAL_RECOGNITION
             );
-
             const biometricAuth = await LocalAuthentication.authenticateAsync({
               promptMessage: isFaceIDSupported
                 ? 'Authenticate with Face ID'
                 : 'Authenticate with Biometrics',
             });
-
             if (biometricAuth.success) {
-              router.replace('/Authenticated/Home/personal'); // Redirect to tabs
+              router.replace('/Authenticated/Home/personal');
               return;
             } else {
               Alert.alert('Authentication Failed', 'Please log in manually.');
-              router.replace('/Unauthenticated/login'); // Redirect to login
+              router.replace('/Unauthenticated/login');
               return;
             }
           } else {
             Alert.alert('Biometric Authentication Not Available', 'Please log in manually.');
-            router.replace('/Unauthenticated/login'); // Redirect to login
+            router.replace('/Unauthenticated/login');
             return;
           }
         } else {
-          router.replace('/Unauthenticated/login'); // Redirect to login if biometric is not enabled
+          router.replace('/Unauthenticated/login');
         }
       } else {
-        router.replace('/Unauthenticated/login'); // Redirect to login if no token is found
+        router.replace('/Unauthenticated/login');
       }
     };
     checkLoginStatus();
@@ -94,15 +85,22 @@ function AppContent() {
   useEffect(() => {
     const unsubscribe = NetInfo.addEventListener(state => {
       if (state.isConnected) {
-        syncPendingActions(); // Try to sync when online
+        syncPendingActions();
       }
     });
     return () => unsubscribe();
   }, []);
 
+  useDataSync(); // <-- Add this line
+
   return (
-    <View style={styles.container}>
-      <Text>Loading...</Text>
+    <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+      <View style={styles.container}>
+        <ExpenseBookIcon width={96} height={96} />
+        <Text style={{ marginTop: 16, fontSize: 24, fontWeight: 'bold' }}>Expense Book</Text>
+        <Text>Loading...</Text>
+      </View>
+
     </View>
   );
 }

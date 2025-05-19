@@ -16,7 +16,7 @@ export default function TabLayout() {
     }else{
       console.log('User found in redux:', user.userId);
     }
-  }, []);
+  }, [user.userId]);
 
   return (
     <Tabs

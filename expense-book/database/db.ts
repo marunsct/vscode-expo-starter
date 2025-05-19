@@ -34,12 +34,12 @@ export const initializeDatabase = async () => {
 export const saveUser = async (user: { id: string; username: string; first_name: string; last_name: string; email: string; gender: string; phone: string; country: string; profile_picture: string; date_of_birth: string; token: string }) => {
   console.log('Saving user to DB...', user);
   try {
-    await db.withTransactionAsync(async () => {
+   
       await db.runAsync(
         `INSERT OR REPLACE INTO users (userId , username,first_name,last_name,email,gender ,phone,country,profile_picture,date_of_birth, token) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);`,
         [user.id, user.username, user.first_name, user.last_name, user.email, user.gender, user.phone, user.country, user.profile_picture, user.date_of_birth, user.token]
       );
-    });
+  
     console.log('User saved to DB successfully');
 
   } catch (error) {
@@ -49,14 +49,14 @@ export const saveUser = async (user: { id: string; username: string; first_name:
 
 // Save friends to the database
 export const saveFriends = async (friends: { id: string; first_name: string; last_name: string; username: string; phone: string; email: string }[]) => {
-  await db.withTransactionAsync(async () => {
+
     for (const friend of friends) {
       await db.runAsync(
         `INSERT OR REPLACE INTO friends (userId, username, first_name, last_name, email, phone) VALUES (?, ?, ?,?,?,?);`,
         [friend.id, friend.username, friend.first_name, friend.last_name, friend.email, friend.phone]
       );
     }
-  });
+ 
 };
 // Get friends from the database
 // Export a constant function called getFriends that returns a Promise of an array of any type
@@ -67,12 +67,12 @@ export const getFriends = async (): Promise<any[]> => {
     // Log a message to the console indicating that friends are being fetched from the DB
     console.log('Fetching friends from DB...');
     // Use a transaction to fetch all friends from the DB
-    await db.withTransactionAsync(async () => {
+   
       // Execute a SQL query to select all friends from the friends table
       const result = await db.getAllAsync(`SELECT * FROM friends;`);
       // Store the result in the friends array
       friends = result;
-    });
+ 
   } catch (error) {
     console.error("Error fetching friends:", error);
   }
@@ -81,7 +81,7 @@ export const getFriends = async (): Promise<any[]> => {
 };
 export const saveBalance = async (balances: { user_id: string; currency: string; balance: number }[]) => {
   try {
-    await db.withTransactionAsync(async () => {
+    
       for (const balance of balances) {
         // Fetch the name from the friends table using the user_id
         const result:{name:string} = (await db.getFirstAsync(
@@ -97,7 +97,7 @@ export const saveBalance = async (balances: { user_id: string; currency: string;
           [balance.user_id, name, balance.currency, balance.balance]
         );
       }
-    });
+   
     console.log('Balances saved successfully');
   } catch (error) {
     console.error('Error saving balances:', error);
@@ -106,10 +106,10 @@ export const saveBalance = async (balances: { user_id: string; currency: string;
 export const getBalance = async (): Promise<{ totalBalance: { Amount: number; Currency: string }[]; userBalance: { id: string; name: string; balances: { currency: string; amount: number }[] }[] }> => {
   let balance: { totalBalance: { Amount: number; Currency: string }[]; userBalance: { id: string; name: string; balances: { currency: string; amount: number }[] }[] } = { totalBalance: [], userBalance: [] };
   try {
-    await db.withTransactionAsync(async () => {
+  
       const result = await db.getAllAsync(`SELECT * FROM balance;`) as { id: string; userId:string; name: string; currency: string; balance: number }[];
       balance = await convertToBalanceFormat(result) as { totalBalance: { Amount: number; Currency: string }[]; userBalance: { id: string; name: string; balances: { currency: string; amount: number }[] }[] };
-    });
+   
   } catch (error) {
     console.error("Error fetching balance:", error);
   }
@@ -134,13 +134,28 @@ export const getUser = async (): Promise<any> => {
 };
 
 export const clearUserData = async () => {
-  await db.withTransactionAsync(async () => {
-    await db.execAsync(`DELETE FROM users;`);
-    await db.execAsync(`DELETE FROM expenses;`);
-    await db.execAsync(`DELETE FROM balance;`);
+    try {
+    await db.runAsync(`DELETE FROM users;`);
+      console.log('User data cleared');
+    await db.runAsync(`DELETE FROM expenses;`);
+      console.log('Expense data cleared');
+    await db.runAsync(`DELETE FROM balance;`);
+    console.log('Balance data cleared');
+    await db.runAsync(`DELETE FROM groups;`);
+    console.log('Group data cleared');
+    await db.runAsync(`DELETE FROM group_members;`);
+    console.log('Group Members data cleared');
+    await db.runAsync(`DELETE FROM friends;`);
+    console.log('Friends data cleared');
+    await db.runAsync(`DELETE FROM sync_queue;`);
+    await db.runAsync(`DELETE FROM expense_splits;`);
     console.log(await getUser());
     console.log('User data cleared');
-  });
+    } catch (error) {
+      console.error('Error clearing data', error);
+    }
+
+ 
 };
 
 export const queueSyncAction = async (
@@ -172,9 +187,212 @@ export const queueSyncAction = async (
  * 
  * @returns {Promise<void>} A promise that resolves when the groups have been successfully saved.
  */
-export const saveGroups = async (groups: { id: string; name: string; members: string[] }[]) => {};
+export const saveGroups = async (
+  groups: {
+    id: number;
+    name: string;
+    currency: string;
+    created_by: number;
+    created_at: string;
+    updated_by: number;
+    updated_at: string;
+    delete_flag: boolean;
+    deleted_at: string | null;
+  }[]
+) => {
+  try {
+  
+      for (const group of groups) {
+        await db.runAsync(
+          `INSERT OR REPLACE INTO groups (
+            groupId, name, currency, created_by, created_at, updated_by, updated_at, is_deleted, deleted_at
+          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?);`,
+          [
+            group.id,
+            group.name,
+            group.currency,
+            group.created_by,
+            group.created_at,
+            group.updated_by,
+            group.updated_at,
+            group.delete_flag ? true : false,
+            group.deleted_at,
+          ]
+        );
+      }
+ 
+    console.log('Group(s) saved successfully');
+  } catch (error) {
+    console.error('Error saving group(s):', error);
+  }
+};
 
+export const saveGroupMembers = async (
+  groupMembers: {
+    id: number;
+    group_id: number;
+    user_id: number;
+    first_name: string;
+    last_name: string;
+    username: string;
+    email: string;
+    phone: string;
+    joined_at: string;
+    delete_flag: boolean;
+    deleted_at?: string | null;
+    created_by?: number; // Optional, if you want to support it
+  }[]
+) => {
+  try {
+  
+      for (const member of groupMembers) {
+        await db.runAsync(
+          `INSERT OR REPLACE INTO group_members (
+            member_id, groupId, userId, first_name, last_name, username, email, phone, created_by, joined_at, is_deleted, deleted_at
+          ) VALUES (?,?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);`,
+          [
+            member.id,
+            member.group_id,
+            member.user_id,
+            member.first_name,
+            member.last_name,
+            member.username,
+            member.email,
+            member.phone,
+            member.created_by ?? null,
+            member.joined_at,
+            member.delete_flag ? 1 : 0,
+            member.deleted_at ?? null,
+          ]
+        );
+      }
 
+    console.log('Group member(s) saved successfully');
+  } catch (error) {
+    console.error('Error saving group member(s):', error);
+  }
+};
+
+/**
+ * Saves or updates an expense in the expenses table.
+ * @param expense An expense object or array of expense objects.
+ */
+export const saveExpenses = async (
+  expense:
+    | {
+        id: number;
+        description: string;
+        currency: string;
+        amount: number;
+        group_id: number;
+        split_method: string;
+        paid_by_user: number;
+        image_url: string | null;
+        flag: boolean;
+        created_by: number;
+        created_at: string;
+        updated_by: number;
+        updated_at: string;
+        delete_flag: boolean;
+        deleted_at: string | null;
+      }
+    | {
+        id: number;
+        description: string;
+        currency: string;
+        amount: number;
+        group_id: number;
+        split_method: string;
+        paid_by_user: number;
+        image_url: string | null;
+        flag: boolean;
+        created_by: number;
+        created_at: string;
+        updated_by: number;
+        updated_at: string;
+        delete_flag: boolean;
+        deleted_at: string | null;
+      }[]
+) => {
+  const expenses = Array.isArray(expense) ? expense : [expense];
+  try {
+    
+      for (const exp of expenses) {
+        await db.runAsync(
+          `INSERT OR REPLACE INTO expenses (
+            expenseId, description, currency, amount, groupId, split_method, paid_by, image_url, is_settled, created_by, created_at, updated_by, updated_at, is_deleted, deleted_at
+          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);`,
+          [
+            exp.id,
+            exp.description,
+            exp.currency,
+            exp.amount,
+            exp.group_id,
+            exp.split_method,
+            exp.paid_by_user,
+            exp.image_url,
+            exp.flag ? true : false,
+            exp.created_by,
+            exp.created_at,
+            exp.updated_by,
+            exp.updated_at,
+            exp.delete_flag ? true : false,
+            exp.deleted_at,
+          ]
+        );
+      }
+  
+    console.log('Expense(s) saved successfully');
+  } catch (error) {
+    console.error('Error saving expense(s):', error);
+  }
+};
+
+export const saveExpenseSplits = async (
+  expenseSplits: {
+    id: number;
+    expense_id: number;
+    user_id: number;
+    paid_to_user: number;
+    share: number;
+    counter: number;
+    flag: boolean;
+    created_at: string;
+    updated_by: number;
+    updated_at: string;
+    delete_flag: boolean;
+    deleted_at: string | null;
+  }[]
+) => {
+  try {
+    
+      for (const split of expenseSplits) {
+        await db.runAsync(
+          `INSERT OR REPLACE INTO expense_splits (
+            id, expenseId, userId, paid_to_user, amount, counter, is_settled, created_at, updated_by, updated_at, is_deleted, deleted_at
+          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);`,
+          [
+            split.id,
+            split.expense_id,
+            split.user_id,
+            split.paid_to_user,
+            split.share,
+            split.counter,
+            split.flag ? true : false,
+            split.created_at,
+            split.updated_by,
+            split.updated_at,
+            split.delete_flag ? true : false,
+            split.deleted_at,
+          ]
+        );
+      }
+   
+    console.log('Expense split(s) saved successfully');
+  } catch (error) {
+    console.error('Error saving expense split(s):', error);
+  }
+};
 
 /**
  * Converts an array of balance items to a format with separate arrays for
@@ -215,3 +433,144 @@ const convertToBalanceFormat = async (data: { id: string; userId: string; name: 
 
   return { totalBalance, userBalance };
 }
+
+/**
+ * Fetch all groups from the database.
+ * @returns {Promise<any[]>} Array of group objects.
+ */
+export const getGroups = async (): Promise<any[]> => {
+  let groups: any[] = [];
+  try {
+ 
+      const result = await db.getAllAsync(`SELECT * FROM groups;`);
+      groups = result;
+
+  } catch (error) {
+    console.error('Error fetching groups:', error);
+  }
+  return groups;
+};
+
+/**
+ * Fetch all group members for a given groupId.
+ * @param {number} groupId - The group ID to fetch members for.
+ * @returns {Promise<any[]>} Array of group member objects.
+ */
+export const getGroupMembers = async (groupId: number): Promise<any[]> => {
+  let members: any[] = [];
+  try {
+   
+      const result = await db.getAllAsync(
+        `SELECT * FROM group_members WHERE groupId = ?;`,
+        [groupId]
+      );
+      members = result;
+    
+  } catch (error) {
+    console.error('Error fetching group members:', error);
+  }
+  return members;
+};
+
+/**
+ * Fetch all expenses for a given groupId.
+ * @param {number} groupId - The group ID to fetch expenses for.
+ * @returns {Promise<any[]>} Array of expense objects.
+ */
+export const getExpenses = async (groupId: number): Promise<any[]> => {
+  let expenses: any[] = [];
+  try {
+   
+      const result = await db.getAllAsync(
+        `SELECT * FROM expenses WHERE groupId = ?;`,
+        [groupId]
+      );
+      expenses = result;
+   
+  } catch (error) {
+    console.error('Error fetching expenses:', error);
+  }
+  return expenses;
+};
+
+/**
+ * Fetch all expense splits for a given expenseId.
+ * @param {number} expenseId - The expense ID to fetch splits for.
+ * @returns {Promise<any[]>} Array of expense split objects.
+ */
+export const getExpenseSplits = async (expenseId: number): Promise<any[]> => {
+  let splits: any[] = [];
+  try {
+  
+      const result = await db.getAllAsync(
+        `SELECT * FROM expense_splits WHERE expenseId = ?;`,
+        [expenseId]
+      );
+      splits = result;
+   
+  } catch (error) {
+    console.error('Error fetching expense splits:', error);
+  }
+  return splits;
+};
+
+/**
+ * Fetch all expenses between two users, with splits for each expense.
+ * @param {number} userA - First user ID.
+ * @param {number} userB - Second user ID.
+ * @returns {Promise<any[]>} Array of { ...expense, splits: [expenseSplit, ...] }
+ */
+export const getExpensesBetweenUsers = async (userA: number, userB: number): Promise<any[]> => {
+  let expensesWithSplits: any[] = [];
+  try {
+   
+      // Get all expenses where both users are involved in splits
+      const expenses: any[] = await db.getAllAsync(
+        `SELECT DISTINCT e.*
+         FROM expenses e
+         JOIN expense_splits s1 ON e.expenseId = s1.expenseId
+         JOIN expense_splits s2 ON e.expenseId = s2.expenseId
+         WHERE s1.userId = ? AND s2.userId = ?;`,
+        [userA, userB]
+      );
+
+      for (const expense of expenses) {
+        // Get all splits for this expense
+        const splits = await db.getAllAsync(
+          `SELECT * FROM expense_splits WHERE expenseId = ?;`,
+          [expense.expenseId]
+        );
+        expensesWithSplits.push({
+          ...expense,
+          splits,
+        });
+      }
+   
+  } catch (error) {
+    console.error('Error fetching expenses between users:', error);
+  }
+  return expensesWithSplits;
+};
+
+export const deleteAllTables = async () => {
+  const tables = [
+    'users',
+    'friends',
+    'balance',
+    'expenses',
+    'sync_queue',
+    'groups',
+    'group_members',
+    'expense_splits'
+  ];
+  try {
+    
+      for (const table of tables) {
+        await db.execAsync(`DROP TABLE IF EXISTS ${table};`);
+      }
+ 
+    console.log('All tables deleted successfully');
+  } catch (error) {
+    console.error('Error deleting tables:', error);
+  }
+};

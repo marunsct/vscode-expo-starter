@@ -4,10 +4,13 @@ const initialState = {
   user: {},
   friends : [],
   expenses :[],
+  expense: {},
   expense_id: [],
   groups:[],
+  group: {},
   group_images: [],
   totalExpenses: {},
+  expenseBetweenUsers:[]
 }
 
 export const fetchContext = createSlice({

@@ -18,6 +18,10 @@ export default function RootLayout() {
     checkLoginStatus();
   }, []);
 
+  useEffect(() => {
+    console.log('Login status:', isLoggedIn); // Log the login status
+  }, [isLoggedIn]);
+
   return (
     <Provider store={store}>
       {isLoggedIn === null ? (

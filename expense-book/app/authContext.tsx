@@ -2,7 +2,7 @@
 // tokenUtils.ts
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Alert } from 'react-native';
-const baseUrl = 'https://expensebook-rea1.onrender.com'; // Replace with your actual base URL
+const baseUrl =  'https://expensebook-rea1.onrender.com'; // Replace with your actual base URL
 const getToken = async () => {
     const token = await AsyncStorage.getItem('token');
     return token;
@@ -39,6 +39,8 @@ const getApiKey = async (token: string) => {
 const removeToken = async () => {
     await AsyncStorage.removeItem('token');
     await AsyncStorage.removeItem('apiKey');
+    await AsyncStorage.removeItem('lastLogin');
+    console.log('Token and API key removed successfully');
 }
 
 const getLocalApiKey = async () => {    

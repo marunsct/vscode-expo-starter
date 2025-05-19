@@ -1,0 +1,7 @@
+<!-- Expense Book Icon: EB with currency symbols -->
+
+<svg width="64" height="64" viewBox="0 0 64 64">
+  <rect width="64" height="64" rx="12" fill="#2d3748"/>
+  <text x="14" y="44" font-size="32" font-family="Arial" font-weight="bold" fill="#fff">€</text>
+  <text x="32" y="44" font-size="32" font-family="Arial" font-weight="bold" fill="#ffd700">฿</text>
+</svg>

@@ -1,6 +1,6 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { fetchWithAuth } from '../../app/authContext';
-import { getBalance, getFriends, saveBalance, saveFriends, saveGroups } from '../../database/db';
+import { getBalance, getFriends, saveBalance, saveExpenses, saveExpenseSplits, saveFriends, saveGroupMembers, saveGroups } from '../../database/db';
 import { setFriends, setTotalExpenses } from '../context/contextSlice';
 
 // Accept dispatch and user as arguments
@@ -17,7 +17,8 @@ const fetchApiData = async (dispatch, user) => {
     await AsyncStorage.setItem('lastLogin', new Date().toISOString());
     // Log the updated last login date
     console.log('Updated last login:', new Date().toISOString());
-
+    // Fetch all data and save it to the database
+    fetchAllDataAndSave(user, lastLogin, dispatch);
     // Fetch friends data
     fetchFriendsData(user, lastLogin, dispatch);
     // Fetch balance data
@@ -86,34 +87,62 @@ const fetchBalanceData = async (user, dispatch) => {
   }
 };
 
-// Fetch groups data for a user .
-// check for user.groups has any data
-// if yes then fetch groups data from server update after lastLogin
-// if no then fetch groups data from server and save to local storage
-const fetchGroupsData = async (user, lastLogin, dispatch) => {
+
+
+
+/**
+ * Fetches all data for a user from the server and saves it to the
+ * local database. The data is fetched after the last login date.
+ *
+ * @param {Object} user - The user object with the userId property.
+ * @param {string} lastLogin - The last login date as a string in the
+ *   format 'YYYY-MM-DD HH:MM:SS'.
+ * @param {function} dispatch - The Redux dispatch function to
+ *   dispatch the total expenses to the Redux store.
+ */
+// Function to fetch all data for a user from the server and save it to the local database
+　export const fetchAllDataAndSave = async (user, lastLogin, dispatch) => {
   try {
-    // Fetch groups data from the server
-    const fetchGroupsSRV = await fetchWithAuth('/users/' + user.userId + '/groups', { method: 'GET' });
+    // Fetch all data from the server
+    const fetchAllSRV = await fetchWithAuth('/users/' + user.userId + '/all-data-after/' + lastLogin, { method: 'GET' });
     // Check if the request was successful
-    if (fetchGroupsSRV.ok) {
+    if (fetchAllSRV.ok) {
       // Parse the response as JSON
-      const data = await fetchGroupsSRV.json();
-      // Log the fetched groups data
-      console.log('Fetched groups:', data.length, user.userId);
+      const data = await fetchAllSRV.json();
+      // Log the fetched all data
+      console.log('Fetched all data:', data, user.userId);
       // Check if there is any data
-      if (data.length > 0) {
-        // Save the groups data
-        await saveGroups(data);
-        // Dispatch the total expenses to the Redux store
-        dispatch(setTotalExpenses(await getBalance()));
+      if (data.Groups.length > 0) {
+        // Save the all data
+        await saveGroups(data.Groups);
+      }else {
+        console.log('No new groups data to save');
+      }
+      if (data.groupMembers.length > 0) {
+        // Save the all data
+        await saveGroupMembers(data.groupMembers);
+      }else {
+        console.log('No new group members data to save');
+      }
+      if (data.expenses.length > 0) {
+        // Save the all data
+        await saveExpenses(data.expenses);
+      }else {
+        console.log('No new expenses data to save');
+      }
+      if (data.expenseSplits.length > 0) {
+        // Save the all data
+        await saveExpenseSplits(data.expenseSplits);
+      }else {
+        console.log('No new expense splits data to save');
       }
     } else {
       // Log any errors that occur
-      console.error('Error fetching groups: API error', fetchGroupsSRV);
+      console.log('No User Found: API error', fetchAllSRV);
     }
   } catch (error) {
     // Log any errors that occur
-    console.error('Error fetching Groups data:', error);
+    console.error('Error fetching All data:', error);
   }
 };
 

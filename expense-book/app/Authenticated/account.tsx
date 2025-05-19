@@ -8,9 +8,11 @@ export default function Account() {
     const router = useRouter();
     const theme = useTheme(); // Access the theme
   const handleLogout = async () => {
-    removeToken(); // Clear the token
-    clearUserData(); // Clear user data from the database
     router.replace('/Unauthenticated/login'); // Redirect to login screen
+    removeToken(); // Clear the token
+   await clearUserData(); // Clear user data from the database
+   // await deleteAllTables(); // Delete all tables from the database
+    // Redirect to login screen
   };
   return (
     <View style={[styles.container, { backgroundColor: theme.colors.background }]}>
