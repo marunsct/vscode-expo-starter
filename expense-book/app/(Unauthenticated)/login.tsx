@@ -6,9 +6,9 @@ import { Alert, Button, Keyboard, KeyboardAvoidingView, Platform, Pressable, Scr
 import { useDispatch } from 'react-redux';
 import { getUser, saveUser } from '../../database/db'; // Adjust the import path as necessary
 import fetchApiData from '../../features/backend/initialDataAPIFetch';
+import { fetchWithoutAuth, setToken } from '../../features/context/authContext';
 import { setUser } from '../../features/context/contextSlice';
-import { useTheme } from '../ThemeContext';
-import { fetchWithoutAuth, setToken } from '../authContext';
+import { useTheme } from '../../features/theme/ThemeContext';
 
 export default function Login() {
   const router = useRouter();
@@ -64,7 +64,7 @@ export default function Login() {
         }
 
         //Alert.alert('Login Successful', `Welcome!`);
-        router.replace('/Authenticated/Home/personal'); // Redirect to tabs
+        router.replace('/personal'); // Redirect to tabs
       } else {
         Alert.alert('Login Failed', data.error || 'Invalid credentials');
       }
@@ -111,10 +111,10 @@ export default function Login() {
             />
             {/* Row for Forgot Password and Sign Up */}
             <View style={styles.row}>
-              <TouchableOpacity onPress={() => router.push('/Unauthenticated/reset-password')}>
+              <TouchableOpacity onPress={() => router.push('/reset-password')}>
                 <Text style={[styles.link, { color: theme.colors.textSecondary }]}>Forgot Password?</Text>
               </TouchableOpacity>
-              <TouchableOpacity onPress={() => router.push('/Unauthenticated/signup')} style={styles.signupButton}>
+              <TouchableOpacity onPress={() => router.push('/signup')} style={styles.signupButton}>
                 <Text style={[styles.signupText, { color: theme.colors.textPrimary }]}>Sign Up</Text>
               </TouchableOpacity>
             </View>

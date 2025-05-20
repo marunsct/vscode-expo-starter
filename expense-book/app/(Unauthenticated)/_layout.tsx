@@ -1,6 +1,6 @@
 import { Ionicons } from '@expo/vector-icons'; // Import Ionicons for icons
 import { createDrawerNavigator } from '@react-navigation/drawer';
-import { useTheme } from '../ThemeContext'; // Import the theme context
+import { useTheme } from '../../features/theme/ThemeContext'; // Import the theme context
 import Login from './login';
 import ResetPassword from './reset-password';
 import Signup from './signup';

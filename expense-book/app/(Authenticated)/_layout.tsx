@@ -5,7 +5,7 @@ import { Slot, useNavigation } from 'expo-router';
 import { useEffect, useState } from 'react';
 import { Text, TouchableOpacity, View } from 'react-native';
 import { useDispatch, useSelector } from 'react-redux';
-import { useTheme } from '../ThemeContext'; // Import the theme context
+import { useTheme } from '../../features/theme/ThemeContext'; // Import the theme context
 import Account from './account';
 import Settings from './settings';
 

@@ -1,5 +1,5 @@
-import { fetchWithAuth } from '../../app/authContext';
 import { db } from '../../database/db';
+import { fetchWithAuth } from '../context/authContext';
 
 //const db = SQLite.openDatabaseSync('expenseBook.db');
 

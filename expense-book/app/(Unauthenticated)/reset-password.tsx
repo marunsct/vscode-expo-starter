@@ -18,7 +18,7 @@ export default function ResetPassword() {
 
       if (response.ok) {
         Alert.alert('Success', 'Password reset link sent to your email.');
-        router.replace('/Unauthenticated/login'); // Redirect to login
+        router.replace('/login'); // Redirect to login
       } else {
         const data = await response.json();
         Alert.alert('Error', data.error || 'Failed to send reset link.');

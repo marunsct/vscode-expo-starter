@@ -3,7 +3,7 @@ import React, { useEffect, useState } from 'react';
 import { FlatList, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { useSelector } from 'react-redux';
 import { getCurrencySymbol } from '../../../features/helpers/currencyHelper';
-import { useTheme } from '../../ThemeContext';
+import { useTheme } from '../../../features/theme/ThemeContext';
 
 // Helper to get currency symbol
 type Group = {

@@ -9,7 +9,7 @@
             "request": "attach",
             "type": "reactnativedirect",
             "cwd": "${workspaceFolder}",
-            "address": "127.0.0.1"
+            "address": "https://w8rtxb94-8082.asse.devtunnels.ms/"
         },
         {
             "type": "expo",
@@ -17,7 +17,7 @@
             "name": "Debug Expo app",
             "projectRoot": "${workspaceFolder}",
             "bundlerPort": "8081",
-            "bundlerHost": "127.0.0.1"
+            "bundlerHost": "https://w8rtxb94-8081.asse.devtunnels.ms/"
         }
     ]
 }

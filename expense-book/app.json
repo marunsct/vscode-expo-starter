@@ -4,7 +4,7 @@
     "slug": "expense-book",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/images/expense-book-icon.svg",
+    "icon": "./assets/images/adaptive-icon.png",
     "scheme": "expensebook",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,

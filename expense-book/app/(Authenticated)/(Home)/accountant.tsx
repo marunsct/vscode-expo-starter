@@ -1,7 +1,7 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useRouter } from 'expo-router';
 import { Button, StyleSheet, Text, View } from 'react-native';
-import { useTheme } from '../../ThemeContext'; // Import the theme context
+import { useTheme } from '../../../features/theme/ThemeContext'; // Import the theme context
 
 export default function Accountant() {
   const router = useRouter();
@@ -9,7 +9,7 @@ export default function Accountant() {
 
   const handleLogout = async () => {
     await AsyncStorage.removeItem('token'); // Clear the token
-    router.replace('/Unauthenticated/login'); // Redirect to login screen
+    router.replace('/login'); // Redirect to login screen
   };
 
   return (

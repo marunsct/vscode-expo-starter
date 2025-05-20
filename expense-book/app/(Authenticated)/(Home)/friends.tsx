@@ -1,10 +1,10 @@
 import { Ionicons } from '@expo/vector-icons';
-import { Link, router } from 'expo-router';
+import { router, useSegments } from 'expo-router';
 import React, { useEffect, useState } from 'react';
 import { FlatList, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { useSelector } from 'react-redux';
 // Update the import path below to the correct location of ThemeContext in your project
-import { useTheme } from '../../../ThemeContext';
+import { useTheme } from '../../../features/theme/ThemeContext';
 // If ThemeContext is located elsewhere, adjust the path accordingly, e.g.:
 // import { useTheme } from '../../../common/ThemeContext';
 
@@ -67,8 +67,11 @@ export default function Friends() {
   }>({ totalBalance: [], userBalance: [] });
   const user = useSelector((state: any) => state.context.user);
   const Balance = useSelector((state: any) => state.context.totalExpenses);
+  const segments = useSegments();
+
 
   useEffect(() => {
+
     if (user) {
       console.log('User loaded in Friends:', user.userId);
     }
@@ -162,15 +165,19 @@ export default function Friends() {
       <TouchableOpacity
         style={styles.fab}
         onPress={() => {
-          console.log('Floating button pressed12');
-          router.navigate('/friends/add-expense'); // absolute path!
+          try {
+            console.log('Current segments:', segments);
+            console.log('Navigating to add-expense');
+            router.push('/addExpense'); // Use full path for stack navigation
+            console.log('router.push called for /addExpense');
+
+          } catch (error) {
+            console.error('Error navigating to add-expense:', error);
+          }
         }}
       >
         <Ionicons name="add" size={32} color="#fff" style={{ alignSelf: 'center' }} />
       </TouchableOpacity>
-      <Link href="/friends/add-expense" withAnchor>
-        Go to post
-      </Link>
     </View>
   );
 }

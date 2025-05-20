@@ -2,7 +2,7 @@ import { useRouter } from 'expo-router';
 import React, { useState } from 'react';
 import { Alert, Button, StyleSheet, Text, TextInput, View } from 'react-native';
 import CountryPicker, { CountryCode } from 'react-native-country-picker-modal'; // Import country picker and CountryCode type
-import { useTheme } from '../ThemeContext'; // Import the theme context
+import { useTheme } from '../../features/theme/ThemeContext'; // Import the theme context
 
 export default function Signup() {
   const router = useRouter();
@@ -28,7 +28,7 @@ export default function Signup() {
 
       if (response.ok) {
         Alert.alert('Success', 'Account created successfully. Please log in.');
-        router.replace('/Unauthenticated/login'); // Redirect to login
+        router.replace('/login'); // Redirect to login
       } else {
         const data = await response.json();
         Alert.alert('Error', data.error || 'Failed to create account.');

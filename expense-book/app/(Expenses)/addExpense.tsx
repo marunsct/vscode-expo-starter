@@ -2,20 +2,20 @@ import { Ionicons, MaterialIcons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import React, { useEffect, useRef, useState } from 'react';
 import {
-    BackHandler,
-    FlatList,
-    KeyboardAvoidingView,
-    Modal,
-    Platform,
-    ScrollView,
-    StyleSheet,
-    Text,
-    TextInput,
-    TouchableOpacity,
-    View
+  BackHandler,
+  FlatList,
+  KeyboardAvoidingView,
+  Platform,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View
 } from 'react-native';
-import { getFriends } from '../../../../database/db';
-import { useTheme } from '../../../ThemeContext';
+import { getFriends } from '../../database/db';
+import CurrencyPicker from '../../features/UIComponents/CurrencyPicker';
+import SearchFriends from '../../features/UIComponents/SearchFriends';
+import { useTheme } from '../../features/theme/ThemeContext';
 
 const currencyList = [
   { code: 'USD', symbol: '$', name: 'US Dollar' },
@@ -60,12 +60,7 @@ export default function AddExpenseModal() {
   const [amount, setAmount] = useState('');
   const [currency, setCurrency] = useState(currencyList[0]);
   const [showCurrencyModal, setShowCurrencyModal] = useState(false);
-  const [date, setDate] = useState(new Date());
-  const [showDatePicker, setShowDatePicker] = useState(false);
-  // Simplified state management to avoid TypeScript warnings
-  const [note] = useState('');
-  const [image] = useState(null);
-  const [group] = useState(null);
+  const [date, setDate] = useState<Date>(new Date());
   const inputRef = useRef<TextInput>(null);
   const descRef = useRef<TextInput>(null);
   const amountRef = useRef<TextInput>(null);
@@ -120,25 +115,6 @@ const handleRemoveFriend: HandleRemoveFriend = (id) => {
     setSelectedFriends(selectedFriends.filter((f) => f.id !== id));
 };
 
-interface Currency {
-    code: string;
-    symbol: string;
-    name: string;
-}
-
-const handleCurrencySelect = (cur: Currency): void => {
-    setCurrency(cur);
-    setShowCurrencyModal(false);
-    setTimeout(() => amountRef.current?.focus(), 100);
-};
-
-// No need for unused interface and function declarations that trigger TypeScript warnings
-// We'll keep the function reference for future implementation
-const handleDateChange = (newDate: Date) => {
-    setDate(newDate);
-    setShowDatePicker(false);
-};
-
   const handleSave = () => {
     // Save logic here
     router.back();
@@ -148,12 +124,10 @@ const handleDateChange = (newDate: Date) => {
     <KeyboardAvoidingView
       style={{ 
         flex: 1, 
-        marginTop: 50, // Add space at the top to make it more modal-like
         backgroundColor: theme.colors.background,
         borderTopLeftRadius: 20,
         borderTopRightRadius: 20,
         overflow: 'hidden',
-        // Add shadow for modal effect
         shadowColor: '#000',
         shadowOffset: { width: 0, height: -3 },
         shadowOpacity: 0.3,
@@ -161,6 +135,7 @@ const handleDateChange = (newDate: Date) => {
         elevation: 10,
       }}
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+      keyboardVerticalOffset={0}
     >
       {/* Header with improved styling for modal */}
       <View style={[styles.headerBar, { 
@@ -176,118 +151,89 @@ const handleDateChange = (newDate: Date) => {
           <Text style={[styles.saveText, { color: theme.colors.primary }]}>Save</Text>
         </TouchableOpacity>
       </View>
-      <ScrollView keyboardShouldPersistTaps="handled" contentContainerStyle={{ flexGrow: 1 }}>
-        {/* Multi-input field */}
-        <Text style={[styles.label, { color: theme.colors.textPrimary }]}>With you and:</Text>
-        <View style={styles.multiInputContainer}>
-          <View style={styles.selectedFriendsRow}>
-            {selectedFriends.map((f) => (
-              <TouchableOpacity key={f.id} style={styles.selectedFriend} onPress={() => handleRemoveFriend(f.id)}>
-                <Text style={styles.selectedFriendText}>{f.first_name || f.username}</Text>
-                <Ionicons name="close-circle" size={18} color={theme.colors.accent} />
-              </TouchableOpacity>
-            ))}
-            <TextInput
-              ref={inputRef}
-              style={[styles.multiInput, { color: theme.colors.textPrimary }]}
-              placeholder="Enter names, email or Phone"
-              placeholderTextColor={theme.colors.textSecondary}
-              value={search}
-              onChangeText={setSearch}
-              onSubmitEditing={() => descRef.current?.focus()}
-              autoFocus
-              returnKeyType="next"
+      <FlatList
+        ListHeaderComponent={
+          <>
+            <SearchFriends
+              search={search}
+              setSearch={setSearch}
+              selectedFriends={selectedFriends}
+              setSelectedFriends={setSelectedFriends}
+              showDropdown={showDropdown}
+              setShowDropdown={setShowDropdown}
+              searchResults={searchResults}
+              inputRef={inputRef}
+              descRef={descRef}
+              handleSelectFriend={handleSelectFriend}
+              handleRemoveFriend={handleRemoveFriend}
+              theme={theme}
             />
-          </View>
-          {showDropdown && (
-            <View style={styles.dropdown}>
-              <FlatList
-                data={searchResults}
-                keyExtractor={(item) => item.id}
-                renderItem={({ item }) => (
-                  <TouchableOpacity style={styles.dropdownItem} onPress={() => handleSelectFriend(item)}>
-                    <Text style={{ color: theme.colors.textPrimary }}>{item.first_name} {item.last_name} ({item.username})</Text>
-                  </TouchableOpacity>
-                )}
-                keyboardShouldPersistTaps="handled"
+            <View style={styles.transparentBox}>
+              <TextInput
+                ref={descRef}
+                style={[styles.input, { color: theme.colors.textPrimary }]}
+                placeholder="Enter description"
+                placeholderTextColor={theme.colors.textSecondary}
+                value={description}
+                onChangeText={setDescription}
+                onSubmitEditing={() => amountRef.current?.focus()}
+                returnKeyType="next"
               />
+              <View style={styles.amountRow}>
+                <CurrencyPicker
+                  currency={currency}
+                  setCurrency={setCurrency}
+                  showCurrencyModal={showCurrencyModal}
+                  setShowCurrencyModal={setShowCurrencyModal}
+                  amountRef={amountRef}
+                  currencyList={currencyList}
+                  theme={theme}
+                />
+                <TextInput
+                  ref={amountRef}
+                  style={[styles.input, { flex: 1, color: theme.colors.textPrimary }]}
+                  placeholder="Enter amount"
+                  placeholderTextColor={theme.colors.textSecondary}
+                  value={amount}
+                  onChangeText={setAmount}
+                  keyboardType="numeric"
+                  returnKeyType="none"
+                />
+              </View>
+              <TouchableOpacity style={styles.splitButton}>
+                <Text style={{ color: theme.colors.primary, fontWeight: 'bold' }}>Paid by you and split equally</Text>
+              </TouchableOpacity>
             </View>
-          )}
-        </View>
-        {/* Transparent container with shadow */}
-        <View style={styles.transparentBox}>
-          <TextInput
-            ref={descRef}
-            style={[styles.input, { color: theme.colors.textPrimary }]}
-            placeholder="Enter description"
-            placeholderTextColor={theme.colors.textSecondary}
-            value={description}
-            onChangeText={setDescription}
-            onSubmitEditing={() => amountRef.current?.focus()}
-            returnKeyType="next"
-          />
-          <View style={styles.amountRow}>
-            <TouchableOpacity style={styles.currencyButton} onPress={() => setShowCurrencyModal(true)}>
-              <Text style={styles.currencyText}>{currency.symbol}</Text>
-            </TouchableOpacity>
-            <TextInput
-              ref={amountRef}
-              style={[styles.input, { flex: 1, color: theme.colors.textPrimary }]}
-              placeholder="Enter amount"
-              placeholderTextColor={theme.colors.textSecondary}
-              value={amount}
-              onChangeText={setAmount}
-              keyboardType="numeric"
-              returnKeyType="done"
-            />
-          </View>
-          <TouchableOpacity style={styles.splitButton}>
-            <Text style={{ color: theme.colors.primary, fontWeight: 'bold' }}>Paid by you and split equally</Text>
-          </TouchableOpacity>
-        </View>
-        {/* Bottom bar */}
-        <View style={styles.bottomBar}>
-          <TouchableOpacity style={styles.bottomIcon} onPress={() => setShowDatePicker(true)}>
-            <Ionicons name="calendar" size={24} color={theme.colors.primary} />
-            <Text style={{ marginLeft: 6, color: theme.colors.textPrimary, fontWeight: 'bold' }}>
-              {date ?
-                (new Date(date).toDateString() === new Date().toDateString()
-                  ? 'Today'
-                  : date.toLocaleString('default', { month: 'short', day: '2-digit' }))
-                : 'Today'}
-            </Text>
-          </TouchableOpacity>
-          <TouchableOpacity style={styles.bottomIcon}>
-            <Ionicons name="people" size={24} color={theme.colors.primary} />
-            <Text style={{ marginLeft: 6, color: theme.colors.textPrimary }}>No groups</Text>
-          </TouchableOpacity>
-          <View style={styles.bottomRightIcons}>
-            <TouchableOpacity style={styles.bottomIcon}>
-              <Ionicons name="camera" size={24} color={theme.colors.primary} />
-            </TouchableOpacity>
-            <TouchableOpacity style={styles.bottomIcon}>
-              <MaterialIcons name="note-add" size={24} color={theme.colors.primary} />
-            </TouchableOpacity>
-          </View>
-        </View>
-      </ScrollView>
-      {/* Currency Modal */}
-      <Modal visible={showCurrencyModal} transparent animationType="fade">
-        <TouchableOpacity style={styles.modalOverlay} onPress={() => setShowCurrencyModal(false)}>
-          <View style={styles.currencyModal}>
-            <FlatList
-              data={currencyList}
-              keyExtractor={(item) => item.code}
-              renderItem={({ item }) => (
-                <TouchableOpacity style={styles.currencyItem} onPress={() => handleCurrencySelect(item)}>
-                  <Text style={{ fontSize: 18 }}>{item.symbol} {item.name}</Text>
+            <View style={styles.bottomBar}>
+              <TouchableOpacity style={styles.bottomIcon}>
+                <Ionicons name="calendar" size={24} color={theme.colors.primary} />
+                <Text style={{ marginLeft: 6, color: theme.colors.textPrimary, fontWeight: 'bold' }}>
+                  {new Date(date).toDateString() === new Date().toDateString()
+                    ? 'Today'
+                    : date.toLocaleString('default', { month: 'short', day: '2-digit' })}
+                </Text>
+              </TouchableOpacity>
+              <TouchableOpacity style={styles.bottomIcon}>
+                <Ionicons name="people" size={24} color={theme.colors.primary} />
+                <Text style={{ marginLeft: 6, color: theme.colors.textPrimary }}>No groups</Text>
+              </TouchableOpacity>
+              <View style={styles.bottomRightIcons}>
+                <TouchableOpacity style={styles.bottomIcon}>
+                  <Ionicons name="camera" size={24} color={theme.colors.primary} />
                 </TouchableOpacity>
-              )}
-            />
-          </View>
-        </TouchableOpacity>
-      </Modal>
-      {/* Date Picker Modal (implement with your preferred date picker library) */}
+                <TouchableOpacity style={styles.bottomIcon}>
+                  <MaterialIcons name="note-add" size={24} color={theme.colors.primary} />
+                </TouchableOpacity>
+              </View>
+            </View>
+          </>
+        }
+        data={[]}
+        renderItem={null}
+        keyExtractor={() => ''}
+        keyboardShouldPersistTaps="always"
+      />
+      {/* Currency Modal and Date Picker Modal remain as is, but CurrencyPicker handles the modal */}
     </KeyboardAvoidingView>
   );
 }

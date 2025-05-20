@@ -2,7 +2,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import NetInfo from '@react-native-community/netinfo';
 import { useEffect, useRef } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { fetchAllDataAndSave } from '../features/backend/initialDataAPIFetch';
+import { fetchAllDataAndSave } from './initialDataAPIFetch';
 
 const SYNC_INTERVAL = 2 * 60 * 1000; // 2 minutes in ms
 

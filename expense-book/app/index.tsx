@@ -9,10 +9,10 @@ import ExpenseBookIcon from '../assets/images/expense-book-icon.svg'; // adjust 
 import { getUser, initializeDatabase } from '../database/db';
 import fetchApiData from '../features/backend/initialDataAPIFetch';
 import { syncPendingActions } from '../features/backend/syncDevicetoDB';
+import useDataSync from '../features/backend/useDataSync'; // <-- Add this import
+import { getApiKey } from '../features/context/authContext';
 import { setUserAndGetState } from '../features/context/contextThunks';
-import { getApiKey } from './authContext';
 import { store } from './store';
-import useDataSync from './useDataSync'; // <-- Add this import
 
 function AppContent() {
   const router = useRouter();
@@ -59,7 +59,7 @@ function AppContent() {
                 : 'Authenticate with Biometrics',
             });
             if (biometricAuth.success) {
-              router.replace('/personal');
+              router.replace('/friends');
               return;
             } else {
               Alert.alert('Authentication Failed', 'Please log in manually.');

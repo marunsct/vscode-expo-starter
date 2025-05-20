@@ -1,6 +1,6 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { fetchWithAuth } from '../../app/authContext';
 import { getBalance, getFriends, getUserGroupsWithBalance, saveBalance, saveExpenses, saveExpenseSplits, saveFriends, saveGroupMembers, saveGroups } from '../../database/db';
+import { fetchWithAuth } from '../context/authContext';
 import { setFriends, setGroups, setTotalExpenses } from '../context/contextSlice';
 
 // Accept dispatch and user as arguments
