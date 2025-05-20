@@ -4,7 +4,6 @@ import React, { useEffect, useState } from 'react';
 import { FlatList, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { useSelector } from 'react-redux';
 // Update the import path below to the correct location of ThemeContext in your project
-import { Button } from '@react-navigation/elements';
 import { useTheme } from '../../../ThemeContext';
 // If ThemeContext is located elsewhere, adjust the path accordingly, e.g.:
 // import { useTheme } from '../../../common/ThemeContext';
@@ -163,21 +162,15 @@ export default function Friends() {
       <TouchableOpacity
         style={styles.fab}
         onPress={() => {
-            console.log('Floating button pressed1');
-            router.push('/Authenticated/Home/friends/add-expense'); // absolute path!
-          }}
+          console.log('Floating button pressed12');
+          router.navigate('/friends/add-expense'); // absolute path!
+        }}
       >
         <Ionicons name="add" size={32} color="#fff" style={{ alignSelf: 'center' }} />
       </TouchableOpacity>
-      <Link
-        href="/Authenticated/Home/friends/add-expense" push asChild >
-            <Button
-              color={theme.colors.primary} // Apply theme color to the button
-              style={{ marginTop: 16 }} // Add some margin for spacing
-            >
-              Go
-            </Button>
-            </Link>
+      <Link href="/friends/add-expense" withAnchor>
+        Go to post
+      </Link>
     </View>
   );
 }

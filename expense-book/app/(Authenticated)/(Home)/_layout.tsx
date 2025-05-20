@@ -1,5 +1,5 @@
 import { Ionicons } from '@expo/vector-icons';
-import { Slot, Tabs } from 'expo-router';
+import { Tabs } from 'expo-router';
 import { useEffect } from 'react';
 import { useSelector } from 'react-redux';
 import { useTheme } from '../../ThemeContext'; // Import the theme context
@@ -31,6 +31,7 @@ export default function HomeLayout() {
         options={{
           headerShown: false,
           title: 'Personal',
+          //href: "/personal",
           tabBarIcon: ({ color, size }) => (
             <Ionicons name="person-outline" color={color} size={size} />
           ),
@@ -41,6 +42,7 @@ export default function HomeLayout() {
         options={{
           headerShown: false,
           title: 'Friends',
+          //href: "/friends",
           tabBarIcon: ({ color, size }) => (
             <Ionicons name="people-outline" color={color} size={size} />
           ),
@@ -69,9 +71,4 @@ export default function HomeLayout() {
       {/* Removed _add-expense modal tab. Use (modals)/add-expense for modal navigation. */}
     </Tabs>
   );
-
-  function FriendsWrapper() {
-  return <Slot />;
-
-// Removed FriendsWrapper as it is not needed for Tabs.Screen
-  }}
+}

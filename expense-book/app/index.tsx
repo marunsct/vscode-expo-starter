@@ -59,23 +59,23 @@ function AppContent() {
                 : 'Authenticate with Biometrics',
             });
             if (biometricAuth.success) {
-              router.replace('/Authenticated/Home/personal');
+              router.replace('/personal');
               return;
             } else {
               Alert.alert('Authentication Failed', 'Please log in manually.');
-              router.replace('/Unauthenticated/login');
+              router.replace('/login');
               return;
             }
           } else {
             Alert.alert('Biometric Authentication Not Available', 'Please log in manually.');
-            router.replace('/Unauthenticated/login');
+            router.replace('/login');
             return;
           }
         } else {
-          router.replace('/Unauthenticated/login');
+          router.replace('/login');
         }
       } else {
-        router.replace('/Unauthenticated/login');
+        router.replace('/login');
       }
     };
     checkLoginStatus();

@@ -38,7 +38,7 @@ export default function AuthenticatedLayout() {
       >
         {/* Home Screen with Tabs */}
         <Drawer.Screen
-          name="HomeTabs"
+          name="Home"
           options={{
             title: 'Home',
             headerLeft: () => <DrawerToggleButton />, // Add drawer toggle button
