@@ -1,6 +1,6 @@
 import { Ionicons } from '@expo/vector-icons';
-import React from 'react';
-import { FlatList, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import React, { useRef } from 'react';
+import { FlatList, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 
 interface Friend {
   id: string;
@@ -26,7 +26,6 @@ interface SearchFriendsProps {
   theme: any;
 }
 
-
 const SearchFriends: React.FC<SearchFriendsProps> = ({
   search,
   setSearch,
@@ -38,57 +37,72 @@ const SearchFriends: React.FC<SearchFriendsProps> = ({
   handleSelectFriend,
   handleRemoveFriend,
   theme,
-}) => (
-  <>
-    <View style={styles.containerRow}>
-      <Text style={[styles.label, { color: theme.colors.textPrimary }]}>With you &:</Text>
-      <View style={styles.multiInputContainerRow}>
-        <View style={styles.inputRow}>
-          {selectedFriends.map((f) => (
-            <TouchableOpacity
-              key={f.id}
-              style={[
-                styles.token,
-                { backgroundColor: theme.colors.primary + '22' },
-              ]}
-              onPress={() => handleRemoveFriend(f.id)}
-            >
-              <Text style={[styles.tokenText, { color: theme.colors.primary }]}>{f.username}</Text>
-              <Ionicons name="close-circle" size={18} color={theme.colors.primary} />
-            </TouchableOpacity>
-          ))}
-          <TextInput
-            ref={inputRef}
-            style={[styles.inputFixed, { color: theme.colors.textPrimary }]}
-            placeholder={selectedFriends.length === 0 ? "Enter names, email or Phone" : undefined}
-            placeholderTextColor={theme.colors.textSecondary}
-            value={search}
-            onChangeText={setSearch}
-            onSubmitEditing={() => descRef.current?.focus()}
-            autoFocus
-            returnKeyType="next"
-          />
-        </View>
-        {showDropdown && (
-          <View style={styles.dropdown}>
-            <FlatList
-              data={searchResults.filter(
-                (item) => !selectedFriends.some((f) => f.id === item.id)
-              ).slice(0, 4)}
-              keyExtractor={(item) => item.id}
-              renderItem={({ item }) => (
-                <TouchableOpacity style={styles.dropdownItem} onPress={() => handleSelectFriend(item)}>
-                  <Text style={{ color: theme.colors.textPrimary }}>{item.first_name} {item.last_name} ({item.username})</Text>
-                </TouchableOpacity>
-              )}
-              keyboardShouldPersistTaps="handled"
+}) => {
+  const scrollRef = useRef<ScrollView | null>(null);
+
+  return (
+    <>
+      <View style={styles.containerRow}>
+        <Text style={[styles.label, { color: theme.colors.textPrimary, flexShrink: 0, flexGrow: 0, flexBasis: 'auto', marginLeft: 5, marginRight: 8, textAlign: 'left' }]}>With you &:</Text>
+        <View style={styles.multiInputContainerRow}>
+          <ScrollView
+            ref={scrollRef}
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={styles.tokenScroll}
+            keyboardShouldPersistTaps="handled"
+            onContentSizeChange={() => {
+              if (scrollRef.current) {
+                scrollRef.current.scrollToEnd({ animated: true });
+              }
+            }}
+          >
+            {selectedFriends.map((f) => (
+              <TouchableOpacity
+                key={f.id}
+                style={[
+                  styles.token,
+                  { backgroundColor: theme.colors.primary + '22' },
+                ]}
+                onPress={() => handleRemoveFriend(f.id)}
+              >
+                <Text style={[styles.tokenText, { color: theme.colors.primary }]}>{f.username}</Text>
+                <Ionicons name="close-circle" size={18} color={theme.colors.primary} />
+              </TouchableOpacity>
+            ))}
+            <TextInput
+              ref={inputRef}
+              style={[styles.inputFixed, { color: theme.colors.textPrimary, minWidth: 80, maxWidth: 120 }]}
+              placeholder={selectedFriends.length === 0 ? "Enter names, email or Phone" : undefined}
+              placeholderTextColor={theme.colors.textSecondary}
+              value={search}
+              onChangeText={setSearch}
+              onSubmitEditing={() => descRef.current?.focus()}
+              autoFocus
+              returnKeyType="next"
             />
-          </View>
-        )}
+          </ScrollView>
+          {showDropdown && (
+            <View style={styles.dropdown}>
+              <FlatList
+                data={searchResults.filter(
+                  (item) => !selectedFriends.some((f) => f.id === item.id)
+                ).slice(0, 4)}
+                keyExtractor={(item) => item.id}
+                renderItem={({ item }) => (
+                  <TouchableOpacity style={styles.dropdownItem} onPress={() => handleSelectFriend(item)}>
+                    <Text style={{ color: theme.colors.textPrimary }}>{item.first_name} ({item.username})</Text>
+                  </TouchableOpacity>
+                )}
+                keyboardShouldPersistTaps="handled"
+              />
+            </View>
+          )}
+        </View>
       </View>
-    </View>
-  </>
-);
+    </>
+  );
+};
 
 export default SearchFriends;
 
@@ -104,7 +118,7 @@ const styles = StyleSheet.create({
   containerRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginHorizontal: 5,
+    marginHorizontal: 16,
     marginBottom: 12,
   },
   multiInputContainerRow: {
@@ -117,12 +131,12 @@ const styles = StyleSheet.create({
     flexWrap: 'wrap',
     alignItems: 'center',
     minHeight: 40,
-    borderWidth: 1,
-    borderColor: '#e0e0e0',
-    borderRadius: 8,
+    borderBottomWidth: 1,
+    borderBottomColor: '#e0e0e0',
+    borderRadius: 0,
     paddingHorizontal: 8,
     backgroundColor: '#fafafa',
-    maxWidth: 220, // fixed width for the multi-input field
+    flex: 1,
   },
   token: {
     flexDirection: 'row',
@@ -138,10 +152,18 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
   },
   inputFixed: {
-    width: 200,
+    minWidth: 80,
+    flex: 1,
     paddingVertical: 8,
     fontSize: 16,
     backgroundColor: 'transparent',
+  },
+  tokenScroll: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    minHeight: 40,
+    paddingHorizontal: 0,
+    flexGrow: 1,
   },
   dropdown: {
     position: 'absolute',

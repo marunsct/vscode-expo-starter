@@ -122,8 +122,8 @@ const handleRemoveFriend: HandleRemoveFriend = (id) => {
 
   return (
     <KeyboardAvoidingView
-      style={{ 
-        flex: 1, 
+      style={{
+        flex: 1,
         backgroundColor: theme.colors.background,
         borderTopLeftRadius: 20,
         borderTopRightRadius: 20,
@@ -138,11 +138,7 @@ const handleRemoveFriend: HandleRemoveFriend = (id) => {
       keyboardVerticalOffset={0}
     >
       {/* Header with improved styling for modal */}
-      <View style={[styles.headerBar, { 
-        borderBottomWidth: 1, 
-        borderBottomColor: '#e0e0e0',
-        backgroundColor: theme.colors.background
-      }]}>
+      <View style={styles.headerBar}>
         <TouchableOpacity onPress={() => router.back()} style={styles.headerIcon}>
           <Ionicons name="close" size={28} color={theme.colors.textPrimary} />
         </TouchableOpacity>
@@ -151,88 +147,93 @@ const handleRemoveFriend: HandleRemoveFriend = (id) => {
           <Text style={[styles.saveText, { color: theme.colors.primary }]}>Save</Text>
         </TouchableOpacity>
       </View>
-      <FlatList
-        ListHeaderComponent={
-          <>
-            <SearchFriends
-              search={search}
-              setSearch={setSearch}
-              selectedFriends={selectedFriends}
-              setSelectedFriends={setSelectedFriends}
-              showDropdown={showDropdown}
-              setShowDropdown={setShowDropdown}
-              searchResults={searchResults}
-              inputRef={inputRef}
-              descRef={descRef}
-              handleSelectFriend={handleSelectFriend}
-              handleRemoveFriend={handleRemoveFriend}
-              theme={theme}
-            />
-            <View style={styles.transparentBox}>
-              <TextInput
-                ref={descRef}
-                style={[styles.input, { color: theme.colors.textPrimary }]}
-                placeholder="Enter description"
-                placeholderTextColor={theme.colors.textSecondary}
-                value={description}
-                onChangeText={setDescription}
-                onSubmitEditing={() => amountRef.current?.focus()}
-                returnKeyType="next"
+      <View style={{ flex: 1 }}>
+        <FlatList
+          ListHeaderComponent={
+            <View style={{ flex: 1, justifyContent: 'space-between', minHeight: '100%' }}>
+              <SearchFriends
+                search={search}
+                setSearch={setSearch}
+                selectedFriends={selectedFriends}
+                setSelectedFriends={setSelectedFriends}
+                showDropdown={showDropdown}
+                setShowDropdown={setShowDropdown}
+                searchResults={searchResults}
+                inputRef={inputRef}
+                descRef={descRef}
+                handleSelectFriend={handleSelectFriend}
+                handleRemoveFriend={handleRemoveFriend}
+                theme={theme}
               />
-              <View style={styles.amountRow}>
-                <CurrencyPicker
-                  currency={currency}
-                  setCurrency={setCurrency}
-                  showCurrencyModal={showCurrencyModal}
-                  setShowCurrencyModal={setShowCurrencyModal}
-                  amountRef={amountRef}
-                  currencyList={currencyList}
-                  theme={theme}
-                />
+              <View style={styles.transparentBox}>
                 <TextInput
-                  ref={amountRef}
-                  style={[styles.input, { flex: 1, color: theme.colors.textPrimary }]}
-                  placeholder="Enter amount"
+                  ref={descRef}
+                  style={[styles.input, { color: theme.colors.textPrimary }]}
+                  placeholder="Enter description"
                   placeholderTextColor={theme.colors.textSecondary}
-                  value={amount}
-                  onChangeText={setAmount}
-                  keyboardType="numeric"
-                  returnKeyType="none"
+                  value={description}
+                  onChangeText={setDescription}
+                  onSubmitEditing={() => amountRef.current?.focus()}
+                  returnKeyType="next"
                 />
-              </View>
-              <TouchableOpacity style={styles.splitButton}>
-                <Text style={{ color: theme.colors.primary, fontWeight: 'bold' }}>Paid by you and split equally</Text>
-              </TouchableOpacity>
-            </View>
-            <View style={styles.bottomBar}>
-              <TouchableOpacity style={styles.bottomIcon}>
-                <Ionicons name="calendar" size={24} color={theme.colors.primary} />
-                <Text style={{ marginLeft: 6, color: theme.colors.textPrimary, fontWeight: 'bold' }}>
-                  {new Date(date).toDateString() === new Date().toDateString()
-                    ? 'Today'
-                    : date.toLocaleString('default', { month: 'short', day: '2-digit' })}
-                </Text>
-              </TouchableOpacity>
-              <TouchableOpacity style={styles.bottomIcon}>
-                <Ionicons name="people" size={24} color={theme.colors.primary} />
-                <Text style={{ marginLeft: 6, color: theme.colors.textPrimary }}>No groups</Text>
-              </TouchableOpacity>
-              <View style={styles.bottomRightIcons}>
-                <TouchableOpacity style={styles.bottomIcon}>
-                  <Ionicons name="camera" size={24} color={theme.colors.primary} />
+                <View style={styles.amountRow}>
+                  <CurrencyPicker
+                    currency={currency}
+                    setCurrency={setCurrency}
+                    showCurrencyModal={showCurrencyModal}
+                    setShowCurrencyModal={setShowCurrencyModal}
+                    amountRef={amountRef}
+                    currencyList={currencyList}
+                    theme={theme}
+                  />
+                  <TextInput
+                    ref={amountRef}
+                    style={[styles.input, { flex: 1, color: theme.colors.textPrimary }]}
+                    placeholder="Enter amount"
+                    placeholderTextColor={theme.colors.textSecondary}
+                    value={amount}
+                    onChangeText={setAmount}
+                    keyboardType="numeric"
+                    returnKeyType="none"
+                  />
+                </View>
+                <TouchableOpacity style={styles.splitButton}>
+                  <Text style={{ color: theme.colors.primary, fontWeight: 'bold' }}>Paid by you and split equally</Text>
                 </TouchableOpacity>
-                <TouchableOpacity style={styles.bottomIcon}>
-                  <MaterialIcons name="note-add" size={24} color={theme.colors.primary} />
-                </TouchableOpacity>
+              </View>
+              <View style={{ flex: 1, justifyContent: 'flex-end' }}>
+                <View style={styles.bottomBar}>
+                  <TouchableOpacity style={styles.bottomIcon}>
+                    <Ionicons name="calendar" size={24} color={theme.colors.primary} />
+                    <Text style={{ marginLeft: 6, color: theme.colors.textPrimary, fontWeight: 'bold' }}>
+                      {new Date(date).toDateString() === new Date().toDateString()
+                        ? 'Today'
+                        : date.toLocaleString('default', { month: 'short', day: '2-digit' })}
+                    </Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity style={styles.bottomIcon}>
+                    <Ionicons name="people" size={24} color={theme.colors.primary} />
+                    <Text style={{ marginLeft: 6, color: theme.colors.textPrimary }}>No groups</Text>
+                  </TouchableOpacity>
+                  <View style={styles.bottomRightIcons}>
+                    <TouchableOpacity style={styles.bottomIcon}>
+                      <Ionicons name="camera" size={24} color={theme.colors.primary} />
+                    </TouchableOpacity>
+                    <TouchableOpacity style={styles.bottomIcon}>
+                      <MaterialIcons name="note-add" size={24} color={theme.colors.primary} />
+                    </TouchableOpacity>
+                  </View>
+                </View>
               </View>
             </View>
-          </>
-        }
-        data={[]}
-        renderItem={null}
-        keyExtractor={() => ''}
-        keyboardShouldPersistTaps="always"
-      />
+          }
+          data={[]}
+          renderItem={null}
+          keyExtractor={() => ''}
+          keyboardShouldPersistTaps="always"
+          contentContainerStyle={{ flexGrow: 1 }}
+        />
+      </View>
       {/* Currency Modal and Date Picker Modal remain as is, but CurrencyPicker handles the modal */}
     </KeyboardAvoidingView>
   );
@@ -244,7 +245,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingHorizontal: 12,
-    paddingTop: Platform.OS === 'ios' ? 48 : 16,
+    paddingTop: Platform.OS === 'ios' ? 30 : 16,
     paddingBottom: 12,
     backgroundColor: 'transparent',
   },
@@ -324,27 +325,28 @@ const styles = StyleSheet.create({
     borderBottomColor: '#eee',
   },
   transparentBox: {
-    margin: 16,
-    padding: 16,
+    margin: 50,
+    padding: 25,
     borderRadius: 16,
+    borderWidth: 1,
     backgroundColor: 'rgba(255,255,255,0.7)',
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
+    shadowOpacity: 0.5,
     shadowRadius: 8,
     elevation: 4,
   },
   input: {
     borderBottomWidth: 1,
-    borderBottomColor: '#e0e0e0',
+    borderBottomColor: '#00796b',
     fontSize: 16,
-    marginBottom: 12,
+    marginBottom: 25,
     paddingVertical: 8,
   },
   amountRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 12,
+    marginBottom: 25,
   },
   currencyButton: {
     marginRight: 8,

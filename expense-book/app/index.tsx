@@ -1,5 +1,6 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import NetInfo from '@react-native-community/netinfo';
+import { LinearGradient } from 'expo-linear-gradient';
 import * as LocalAuthentication from 'expo-local-authentication';
 import { useRouter } from 'expo-router';
 import React, { useEffect } from 'react';
@@ -94,14 +95,18 @@ function AppContent() {
   useDataSync(); // <-- Add this line
 
   return (
-    <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
-      <View style={styles.container}>
-        <ExpenseBookIcon width={96} height={96} />
-        <Text style={{ marginTop: 16, fontSize: 24, fontWeight: 'bold' }}>Expense Book</Text>
-        <Text>Loading...</Text>
+    <LinearGradient
+      colors={['#4CAF50', '#2196F3']}
+      style={styles.gradient}
+    >
+      <View style={styles.loadingContainer}>
+        <View style={styles.container}>
+          <ExpenseBookIcon width={96} height={96} />
+          <Text style={{ marginTop: 16, fontSize: 24, fontWeight: 'bold' }}>Expense Book</Text>
+          <Text>Loading...</Text>
+        </View>
       </View>
-
-    </View>
+    </LinearGradient>
   );
 }
 
@@ -115,6 +120,14 @@ export default function App() {
 
 const styles = StyleSheet.create({
   container: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  gradient: {
+    flex: 1,
+  },
+  loadingContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
