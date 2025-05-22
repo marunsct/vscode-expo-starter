@@ -10,7 +10,16 @@ const initialState = {
   group: {},
   group_images: [],
   totalExpenses: {},
-  expenseBetweenUsers:[]
+  expenseBetweenUsers:[],
+  addExpense: {
+    createdBy: "",
+    description :"",
+    amount: "",
+    date: "",
+    group:[],
+    friends: [],
+    image: "",
+  },
 }
 
 export const fetchContext = createSlice({
@@ -34,10 +43,14 @@ export const fetchContext = createSlice({
       console.log("groups in slice", action.payload);
       state.groups = action.payload;
     },
+    setAddExpense: (state, action) => {
+      console.log("add expense in slice", action.payload);
+      state.addExpense = action.payload;
+    }
   },
 })
 
 // Action creators are generated for each case reducer function
-export const {setExpenses, setFriends, setTotalExpenses, setUser, setGroups } = fetchContext.actions
+export const {setExpenses, setFriends, setTotalExpenses, setUser, setGroups, setAddExpense } = fetchContext.actions
 
 export default fetchContext.reducer

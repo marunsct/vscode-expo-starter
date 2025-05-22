@@ -11,6 +11,7 @@ interface Friend {
   phone?: string;
 }
 
+
 interface SearchFriendsProps {
   search: string;
   setSearch: (s: string) => void;
@@ -23,6 +24,7 @@ interface SearchFriendsProps {
   descRef: React.RefObject<TextInput | null>;
   handleSelectFriend: (friend: Friend) => void;
   handleRemoveFriend: (id: string) => void;
+  handleRemoveGroup: () => void;
   theme: any;
 }
 
@@ -36,6 +38,7 @@ const SearchFriends: React.FC<SearchFriendsProps> = ({
   descRef,
   handleSelectFriend,
   handleRemoveFriend,
+  handleRemoveGroup,
   theme,
 }) => {
   const scrollRef = useRef<ScrollView | null>(null);
