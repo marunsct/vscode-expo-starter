@@ -40,48 +40,58 @@ function AppContent() {
 
   useEffect(() => {
     const checkLoginStatus = async () => {
-      await initializeDatabase();
-      const token = await AsyncStorage.getItem('token');
-      const useBiometric = await AsyncStorage.getItem('useBiometric');
-      if (token) {
-        await getApiKey(token);
-        await setUserInRedux();
-        if (useBiometric === 'true') {
-          const hasBiometricHardware = await LocalAuthentication.hasHardwareAsync();
-          const isBiometricEnrolled = await LocalAuthentication.isEnrolledAsync();
-          const supportedBiometrics = await LocalAuthentication.supportedAuthenticationTypesAsync();
-          if (hasBiometricHardware && isBiometricEnrolled) {
-            const isFaceIDSupported = supportedBiometrics.includes(
-              LocalAuthentication.AuthenticationType.FACIAL_RECOGNITION
-            );
-            const biometricAuth = await LocalAuthentication.authenticateAsync({
-              promptMessage: isFaceIDSupported
-                ? 'Authenticate with Face ID'
-                : 'Authenticate with Biometrics',
-            });
-            if (biometricAuth.success) {
-              router.replace('/friends');
-              return;
+      try {
+
+        await initializeDatabase();
+        const token = await AsyncStorage.getItem('token');
+        const useBiometric = await AsyncStorage.getItem('useBiometric');
+        if (token) {
+          await getApiKey(token);
+          console.log('Token found in device storage');
+          await setUserInRedux();
+          console.log('User set in Context',);
+          if (useBiometric === 'true') {
+            const hasBiometricHardware = await LocalAuthentication.hasHardwareAsync();
+            const isBiometricEnrolled = await LocalAuthentication.isEnrolledAsync();
+            const supportedBiometrics = await LocalAuthentication.supportedAuthenticationTypesAsync();
+            if (hasBiometricHardware && isBiometricEnrolled) {
+              const isFaceIDSupported = supportedBiometrics.includes(
+                LocalAuthentication.AuthenticationType.FACIAL_RECOGNITION
+              );
+              const biometricAuth = await LocalAuthentication.authenticateAsync({
+                promptMessage: isFaceIDSupported
+                  ? 'Authenticate with Face ID'
+                  : 'Authenticate with Biometrics',
+              });
+              if (biometricAuth.success) {
+                router.replace('/friends');
+                return;
+              } else {
+                Alert.alert('Authentication Failed', 'Please log in manually.');
+                router.replace('/login');
+                return;
+              }
             } else {
-              Alert.alert('Authentication Failed', 'Please log in manually.');
+              Alert.alert('Biometric Authentication Not Available', 'Please log in manually.');
               router.replace('/login');
               return;
             }
           } else {
-            Alert.alert('Biometric Authentication Not Available', 'Please log in manually.');
             router.replace('/login');
-            return;
           }
         } else {
           router.replace('/login');
         }
-      } else {
-        router.replace('/login');
-      }
-    };
-    checkLoginStatus();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+      } catch (error) {
+        console.error('Error checking login status:', error);
+        Alert.alert('Error', 'An error occurred while checking login status. Please try again.');
+          router.replace('/login');
+        }
+      };
+
+      checkLoginStatus();
+      // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
 
   useEffect(() => {
     const unsubscribe = NetInfo.addEventListener(state => {

@@ -94,7 +94,21 @@ const SearchFriends: React.FC<SearchFriendsProps> = ({
                 keyExtractor={(item) => item.id}
                 renderItem={({ item }) => (
                   <TouchableOpacity style={styles.dropdownItem} onPress={() => handleSelectFriend(item)}>
-                    <Text style={{ color: theme.colors.textPrimary }}>{item.first_name} ({item.username})</Text>
+                    {/* Avatar: Use initials if no image */}
+                    <View style={{
+                      width: 32,
+                      height: 32,
+                      borderRadius: 16,
+                      backgroundColor: '#e0e0e0',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      marginRight: 12,
+                    }}>
+                      <Text style={{ fontWeight: 'bold', color: '#00796b' }}>
+                        {item.first_name?.[0]?.toUpperCase() ?? item.username?.[0]?.toUpperCase() ?? '?'}
+                      </Text>
+                    </View>
+                    <Text style={{ fontSize: 16, color: '#222' }}>{item.username}</Text>
                   </TouchableOpacity>
                 )}
                 keyboardShouldPersistTaps="handled"
