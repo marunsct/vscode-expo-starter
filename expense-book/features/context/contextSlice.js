@@ -16,7 +16,11 @@ const initialState = {
     description :"",
     amount: "",
     date: "",
-    group:[],
+    split_type: "equal",
+    group:{},
+    groupMembers: [],
+    contributors: [],
+    participants: [],
     friends: [],
     image: "",
   },
@@ -44,7 +48,7 @@ export const fetchContext = createSlice({
       state.groups = action.payload;
     },
     setAddExpense: (state, action) => {
-      console.log("add expense in slice", action.payload);
+      //console.log("add expense in slice", action.payload);
       state.addExpense = action.payload;
     }
   },

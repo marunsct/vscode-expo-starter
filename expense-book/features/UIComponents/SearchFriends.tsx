@@ -94,21 +94,23 @@ const SearchFriends: React.FC<SearchFriendsProps> = ({
                 keyExtractor={(item) => item.id}
                 renderItem={({ item }) => (
                   <TouchableOpacity style={styles.dropdownItem} onPress={() => handleSelectFriend(item)}>
-                    {/* Avatar: Use initials if no image */}
-                    <View style={{
-                      width: 32,
-                      height: 32,
-                      borderRadius: 16,
-                      backgroundColor: '#e0e0e0',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      marginRight: 12,
-                    }}>
-                      <Text style={{ fontWeight: 'bold', color: '#00796b' }}>
-                        {item.first_name?.[0]?.toUpperCase() ?? item.username?.[0]?.toUpperCase() ?? '?'}
-                      </Text>
+                    <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                      {/* Avatar: Use initials if no image */}
+                      <View style={{
+                        width: 32,
+                        height: 32,
+                        borderRadius: 16,
+                        backgroundColor: '#e0e0e0',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        marginRight: 12,
+                      }}>
+                        <Text style={{ fontWeight: 'bold', color: '#00796b' }}>
+                          {item.first_name?.[0]?.toUpperCase() ?? item.username?.[0]?.toUpperCase() ?? '?'}
+                        </Text>
+                      </View>
+                      <Text style={{ fontSize: 16, color: '#222' }}>{item.username}</Text>
                     </View>
-                    <Text style={{ fontSize: 16, color: '#222' }}>{item.username}</Text>
                   </TouchableOpacity>
                 )}
                 keyboardShouldPersistTaps="handled"
@@ -195,7 +197,8 @@ const styles = StyleSheet.create({
     shadowRadius: 4,
     elevation: 4,
     zIndex: 10,
-    maxHeight: 180,
+    maxHeight: 235, // <-- was 180, now fits 4 items
+    overflow: 'hidden', // <-- ensures no overflow
   },
   dropdownItem: {
     padding: 12,

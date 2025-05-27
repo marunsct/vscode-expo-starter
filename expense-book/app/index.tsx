@@ -4,7 +4,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import * as LocalAuthentication from 'expo-local-authentication';
 import { useRouter } from 'expo-router';
 import React, { useEffect } from 'react';
-import { Alert, StyleSheet, Text, View } from 'react-native';
+import { ActivityIndicator, Alert, StyleSheet, Text, View } from 'react-native';
 import { Provider, useDispatch, useSelector } from 'react-redux';
 import ExpenseBookIcon from '../assets/images/expense-book-icon.svg'; // adjust path as needed
 import { getUser, initializeDatabase } from '../database/db';
@@ -13,8 +13,8 @@ import { syncPendingActions } from '../features/backend/syncDevicetoDB';
 import useDataSync from '../features/backend/useDataSync'; // <-- Add this import
 import { getApiKey } from '../features/context/authContext';
 import { setUserAndGetState } from '../features/context/contextThunks';
+import HalfColorSpinner from '../features/UIComponents/HalfColorSpinner'; // Adjust the import path as necessary
 import { store } from './store';
-
 function AppContent() {
   const router = useRouter();
   const user = useSelector((state: any) => state.context.user); // Fix typing
@@ -45,9 +45,11 @@ function AppContent() {
         await initializeDatabase();
         const token = await AsyncStorage.getItem('token');
         const useBiometric = await AsyncStorage.getItem('useBiometric');
+        console.log('Checking login status...');
         if (token) {
+          console.log('getting API key from device storage');
           await getApiKey(token);
-          console.log('Token found in device storage');
+          console.log('API Key found in device storage');
           await setUserInRedux();
           console.log('User set in Context',);
           if (useBiometric === 'true') {
@@ -113,7 +115,8 @@ function AppContent() {
         <View style={styles.container}>
           <ExpenseBookIcon width={96} height={96} />
           <Text style={{ marginTop: 16, fontSize: 24, fontWeight: 'bold' }}>Expense Book</Text>
-          <Text>Loading...</Text>
+          <HalfColorSpinner size={48} />
+          <ActivityIndicator size="large" color="#2196F3" />
         </View>
       </View>
     </LinearGradient>

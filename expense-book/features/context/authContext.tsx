@@ -2,53 +2,59 @@
 // tokenUtils.ts
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Alert } from 'react-native';
-const baseUrl =  'https://expensebook-rea1.onrender.com'; // Replace with your actual base URL
+const baseUrl = 'https://expensebook-rea1.onrender.com'; // Replace with your actual base URL
 const getToken = async () => {
-    const token = await AsyncStorage.getItem('token');
-    return token;
+  const token = await AsyncStorage.getItem('token');
+  return token;
 };
 
 const setToken = async (token: string) => {
-    AsyncStorage.setItem('token', token);
-    await getApiKey(token);
-   
-    console.log('Token and API key set successfully');
+  AsyncStorage.setItem('token', token);
+  await getApiKey(token);
+
+  console.log('Token and API key set successfully');
 };
 
-    /**
-     * Makes a request to the API to retrieve an API key for the given token.
-     * The token must be a valid authentication token.
-     * @param {string} token The authentication token to use for the request.
-     * @returns {Promise<string>} The API key for the given token.
-     */
+/**
+ * Makes a request to the API to retrieve an API key for the given token.
+ * The token must be a valid authentication token.
+ * @param {string} token The authentication token to use for the request.
+ * @returns {Promise<string>} The API key for the given token.
+ */
 const getApiKey = async (token: string) => {
 
+  const localApiKey = await AsyncStorage.getItem('apiKey');
+  if (!localApiKey) {
     const response = await fetch(baseUrl + '/api-keys/retrieve', {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-            Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({consumer_name: "MobileApp"}),
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify({ consumer_name: "MobileApp" }),
     });
-    const {apiKey} = await response.json();
+    const { apiKey } = await response.json();
     AsyncStorage.setItem('apiKey', apiKey);
     return apiKey;
+  } else {
+    console.log('API key already exists in local storage');
+    return localApiKey;
+  }
 };
 
 const removeToken = async () => {
-    await AsyncStorage.removeItem('token');
-    await AsyncStorage.removeItem('apiKey');
-    await AsyncStorage.removeItem('lastLogin');
-    console.log('Token and API key removed successfully');
+  await AsyncStorage.removeItem('token');
+  await AsyncStorage.removeItem('apiKey');
+  await AsyncStorage.removeItem('lastLogin');
+  console.log('Token and API key removed successfully');
 }
 
-const getLocalApiKey = async () => {    
-    const apiKey = await AsyncStorage.getItem('apiKey');
-    if (!apiKey) {
-        throw new Error('API key not found in local storage');
-    }
-    return apiKey;
+const getLocalApiKey = async () => {
+  const apiKey = await AsyncStorage.getItem('apiKey');
+  if (!apiKey) {
+    // throw new Error('API key not found in local storage');
+  }
+  return apiKey;
 }
 
 /**
@@ -59,13 +65,13 @@ const getLocalApiKey = async () => {
  */
 
 const authHeaders = async () => {
-    const token = await getToken();
-    const apiKey = await AsyncStorage.getItem('apiKey');
-    return {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${token}`,
-        'x-api-key': apiKey,
-    };
+  const token = await getToken();
+  const apiKey = await AsyncStorage.getItem('apiKey');
+  return {
+    'Content-Type': 'application/json',
+    Authorization: `Bearer ${token}`,
+    'x-api-key': apiKey,
+  };
 }
 /**
  * Makes a request to the given url with authentication headers.
@@ -74,19 +80,23 @@ const authHeaders = async () => {
  * @returns {Promise<Response>} The response from the server.
  */
 const fetchWithAuth = async (url: string, options: RequestInit) => {
-    const token = await getToken();
-    //console.log('Token:', token);
-    const apiKey = await getLocalApiKey();
-    const optionsReq = {
-        ...options,
-        headers: {
-            ...options.headers,
-            'Content-Type': 'application/json',
-            Authorization: `Bearer ${token}`,
-            'x-api-key': apiKey   },
-    }
-    //console.log('Options:', optionsReq);
-    return fetch( baseUrl + url, optionsReq);
+  const token = await getToken();
+  //console.log('Token:', token);
+  if (!token) {
+    throw new Error('No authentication token found. Please log in.');
+  }
+  const apiKey = await getApiKey(token);
+  const optionsReq = {
+    ...options,
+    headers: {
+      ...options.headers,
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${token}`,
+      'x-api-key': apiKey ?? ''
+    },
+  }
+  //console.log('Options:', optionsReq);
+  return fetch( (baseUrl + url), optionsReq);
 };
 
 /**
@@ -96,13 +106,13 @@ const fetchWithAuth = async (url: string, options: RequestInit) => {
  * @returns {Promise<Response>} The response from the server.
  */
 const fetchWithoutAuth = async (url: string, options: RequestInit) => {
-    return fetch(baseUrl + url, {
-        ...options,
-        headers: {
-            ...options.headers,
-            'Content-Type': 'application/json',
-        },
-    });
+  return fetch(baseUrl + url, {
+    ...options,
+    headers: {
+      ...options.headers,
+      'Content-Type': 'application/json',
+    },
+  });
 };
 
 const fetchWithTimeout = async (url: string, options: RequestInit) => {

@@ -4,6 +4,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import {
   BackHandler,
   FlatList,
+  Keyboard,
   KeyboardAvoidingView,
   Platform,
   ScrollView,
@@ -15,13 +16,14 @@ import {
   View
 } from 'react-native';
 import { useDispatch, useSelector } from 'react-redux';
-import { getFriends } from '../../database/db';
+import { getFriends, getGroupMembers } from '../../database/db';
 import CurrencyPicker from '../../features/UIComponents/CurrencyPicker';
 import DatePickerComponent from '../../features/UIComponents/DatePickerComponent';
 import SearchFriends from '../../features/UIComponents/SearchFriends';
 import { setAddExpense } from '../../features/context/contextSlice';
 import { currencyList } from '../../features/helpers/currencyHelper';
 import { useTheme } from '../../features/theme/ThemeContext';
+import ExpenseSplitModal from './(ExpenseModals)/ExpenseSplitModal';
 import ImagePickerModal from './(ExpenseModals)/ImagePickerModal';
 
 type Group = {
@@ -32,11 +34,15 @@ type Group = {
 };
 type Friend = {
   id: string;
+  userId?: number; // Optional userId for the friend
   first_name?: string;
   last_name?: string;
   username?: string;
   email?: string;
   phone?: string;
+  profile_image?: string;
+  amount?: number; // Optional amount for the friend
+  counter?: number; // Optional counter for the friend
 };
 type ContextExpense = {
   friends: Friend[];
@@ -46,7 +52,10 @@ type ContextExpense = {
   amount: string;
   currency: string;
   date: string;
+  split_type: 'equal' | 'parts' | 'percentage' | 'custom';
   group: Group | null;
+  groupMembers: Friend[]; // Added group members to the context expense
+  contributors: Friend[];
 };
 
 export default function AddExpenseModal() {
@@ -90,14 +99,19 @@ export default function AddExpenseModal() {
   const [isGroupModalVisible, setIsGroupModalVisible] = useState(false);
   const [groupAnchor, setGroupAnchor] = useState<{ x: number; y: number; width: number; height: number } | null>(null);
   const [selectedGroup, setSelectedGroup] = useState<{ id: string; name: string } | null>(null);
+  const [selectedGroupMembers, setSelectedGroupMembers] = useState<Friend[]>([]); // State for the selected group members
+  const [isSplitModalVisible, setIsSplitModalVisible] = useState(false); // State for split modal
+  const [splitType, setSplitType] = useState<'equal' | 'parts' | 'percentage' | 'custom'>('equal'); // State for split type
   const inputRef = useRef<TextInput>(null);
   const descRef = useRef<TextInput>(null);
   const amountRef = useRef<TextInput>(null);
   const groupIconRef = useRef<any>(null);
- const contextExpenseRef = useRef<ContextExpense>(
+  const contextExpenseRef = useRef<ContextExpense>(
     useSelector((state: any) => state.context.addExpense)
   );
-
+  const currentUser = useSelector((state: any) => state.context.user); // Get the current user from the context
+  const [contributors, setContributors] = useState<Friend[]>([{...currentUser, amount : 0.00}]); // Initialize contributors with the current user
+  const [participants, setParticipants] = useState<Friend[]>([]); // Initialize participants
   // When the expense data is set, update the context
 
 
@@ -111,6 +125,7 @@ export default function AddExpenseModal() {
       setDate(new Date(contextExpense.date));
       setSelectedGroup(contextExpense.group);
       setSelectedFriends(contextExpense.friends);
+      return;
     }
     if (selectedFriends.length > 0) {
       updateContext = true;
@@ -132,14 +147,35 @@ export default function AddExpenseModal() {
       updateContext = true;
       contextExpense.date = date.toISOString();
     }
+    if (selectedGroup) {
+      updateContext = true;
+      contextExpense.group = { id: selectedGroup.id, name: selectedGroup.name, balance: 0, currency: currency.code };
+    } else {
+      contextExpense.group = null;
+    }
+
+    if (selectedGroupMembers.length > 0) {
+      updateContext = true;
+      contextExpense.groupMembers = selectedGroupMembers;
+    }
+
+    if(expenseImage) {
+      updateContext = true;
+      contextExpense.image = expenseImage;
+    }
+
+    if (splitType) {
+      updateContext = true;
+      contextExpense.split_type = splitType;
+    }
 
     if (updateContext) {
-      console.log('Updated context:', contextExpense);
+      console.log('Updated context');
       dispatch(
         setAddExpense(contextExpense)
       );
     }
-  }, [selectedFriends, description, amount, currency, date, dispatch]);
+  }, [selectedFriends, splitType, description, amount, currency, date, selectedGroup, selectedGroupMembers, expenseImage, dispatch]);
 
   // Focus on multi-input when screen opens
   useEffect(() => {
@@ -188,9 +224,22 @@ export default function AddExpenseModal() {
     ? [{ id: `group-${selectedGroup.id}`, username: selectedGroup.name, isGroup: true }, ...selectedFriends]
     : selectedFriends;
 
+  // Handle group selection
+  const handleGroupSelect = (group: Group) => {
+    try {
+      console.log('Selecting group members:', parseInt(group.id))
+      getGroupMembers(parseInt(group.id)).then((members) => {
+        setSelectedGroupMembers(members);
+        console.log('Selected group members:', members.length);
+      });
+    } catch (error) {
+      console.error('Error fetching group members:', error);
+    }
+  };
   // Remove group token handler
   const handleRemoveGroup = () => {
     setSelectedGroup(null);
+    setSelectedGroupMembers([]);
   };
 
   interface HandleRemoveFriend {
@@ -208,14 +257,60 @@ export default function AddExpenseModal() {
 
   const handleSave = () => {
     // Save logic here, including expenseImage
-    console.log('Expense Image URI:', expenseImage);
+    //console.log('Expense Image URI:', expenseImage);
     router.back();
+  };
+
+  const openExpenseSplit = async () => {
+
+    if (!amount || parseFloat(amount) <= 0) {
+      alert('Please enter a valid amount to split.'); // Show an alert or some other feedback
+      return;
+    }
+    if (selectedFriends.length === 0 && !selectedGroup) {
+      alert('Please select at least one friend to split the expense with.'); // Show an alert or some other feedback
+      return;
+    }
+    if (participants.length === 0) {
+      const combined = [
+        ...contributors,
+        ...selectedFriends,
+        ...selectedGroupMembers,
+
+      ];
+      console.log('Combined participants:', combined.length);
+      
+      const uniqueById = Array.from(
+        new Map(combined.map(item => [item.userId, item])).values()
+      );
+      setParticipants(uniqueById);
+      console.log('Participants:', uniqueById.length);
+    }
+    setIsSplitModalVisible(true);
   };
 
   const handleSaveImageFromModal = (uri: string | null) => {
     setExpenseImage(uri);
     setIsImagePickerModalVisible(false);
   };
+
+  const onClose = () => {
+    dispatch(setAddExpense({
+      createdBy: "",
+      description: "",
+      amount: "",
+      date: "",
+      split_type: "equal",
+      group: {},
+      groupMembers: [],
+      contributors: [],
+      participants: [],
+      friends: [],
+      image: "",
+    }));
+    router.back();
+  }
+
 
   return (
     <KeyboardAvoidingView
@@ -236,7 +331,7 @@ export default function AddExpenseModal() {
     >
       {/* Header with improved styling for modal */}
       <View style={styles.headerBar}>
-        <TouchableOpacity onPress={() => router.back()} style={styles.headerIcon}>
+        <TouchableOpacity onPress={onClose} style={styles.headerIcon}>
           <Ionicons name="close" size={28} color={theme.colors.textPrimary} />
         </TouchableOpacity>
         <Text style={[styles.headerTitle, { color: theme.colors.textPrimary }]}>Add New Expense</Text>
@@ -296,7 +391,7 @@ export default function AddExpenseModal() {
                       returnKeyType="none"
                     />
                   </View>
-                  <TouchableOpacity style={styles.splitButton}>
+                  <TouchableOpacity style={styles.splitButton} onPress={openExpenseSplit}>
                     <Text style={{ color: theme.colors.primary, fontWeight: 'bold' }}>Paid by you and split equally</Text>
                   </TouchableOpacity>
                 </View>
@@ -309,7 +404,10 @@ export default function AddExpenseModal() {
                   ref={groupIconRef}
                   style={styles.bottomIcon}
                   onPress={() => {
+                    Keyboard.dismiss();
                     groupIconRef.current?.measureInWindow((x: number, y: number, width: number, height: number) => {
+                      console.log(x,y,width, height);
+                      x = x/2;
                       setGroupAnchor({ x, y, width, height });
                       setIsGroupModalVisible(true);
                     });
@@ -377,6 +475,7 @@ export default function AddExpenseModal() {
                   ]}
                   onPress={() => {
                     setSelectedGroup(group);
+                    handleGroupSelect(group);
                     setIsGroupModalVisible(false);
                   }}
                 >
@@ -387,6 +486,19 @@ export default function AddExpenseModal() {
           </View>
         </>
       )}
+      <ExpenseSplitModal
+        visible={isSplitModalVisible}
+        onClose={() => setIsSplitModalVisible(false)}
+        onSave={() => setIsSplitModalVisible(false)}
+        setSplit={(splitType: 'equal' | 'parts' | 'percentage' | 'custom') => setSplitType(splitType)}
+        paidBy={selectedFriends[0] || { id: '', username: 'You' }} // or your logic for payer
+        setNewContributors={(paidBy: Friend[]) => { setContributors(paidBy) }}
+        setNewParticipants={(participants: Friend[]) => { setParticipants(participants) }}
+        participants={participants}
+        contributors={contributors}
+        amount={amount}
+        currency={currency.code}
+      />
     </KeyboardAvoidingView>
   );
 }

@@ -79,6 +79,26 @@ export const getFriends = async (): Promise<any[]> => {
   console.log('Friends fetched:', friends.length);
   return friends;
 };
+
+export const getFriend = async (): Promise<any[]> => {
+  // Initialize an empty array to store friends
+  let friends: any[] = [];
+  try {
+    // Log a message to the console indicating that friends are being fetched from the DB
+    console.log('Fetching friends from DB...');
+    // Use a transaction to fetch all friends from the DB
+   
+      // Execute a SQL query to select all friends from the friends table
+      const result = await db.getFirstAsync(`SELECT * FROM friends;`);
+      // Store the result in the friends array
+      friends = [result];
+
+  } catch (error) {
+    console.error("Error fetching friends:", error);
+  }
+  console.log('Friends fetched:', friends.length);
+  return friends;
+};
 export const saveBalance = async (balances: { user_id: string; currency: string; balance: number }[]) => {
   try {
     
@@ -446,14 +466,26 @@ export const getGroups = async (): Promise<any[]> => {
  */
 export const getGroupMembers = async (groupId: number): Promise<any[]> => {
   let members: any[] = [];
+  console.log('Fetching group members for groupId and friends table');
   try {
-   
-      const result = await db.getAllAsync(
-        `SELECT * FROM group_members WHERE groupId = ?;`,
-        [groupId]
-      );
-      members = result;
-    
+ // Join group_members with users to get all required fields
+    const result = await db.getAllAsync(
+      `SELECT
+          u.id,
+          u.userId,
+          u.first_name,
+          u.last_name,
+          u.username,
+          u.email,
+          u.phone,
+          "" as profile_picture
+        FROM group_members gm
+        INNER JOIN friends u ON gm.userId = u.userId
+        WHERE gm.groupId = ? AND gm.is_deleted = 0;`,
+      [groupId]
+    );
+    members = result;
+    console.log('Group members fetched:');
   } catch (error) {
     console.error('Error fetching group members:', error);
   }
@@ -585,7 +617,7 @@ export const getUserGroupsWithBalance = async (userId: number): Promise<
        WHERE  gm.userId = ? AND g.is_deleted = 0 AND gm.is_deleted = 0;`,
       [userId]
     );
-    console.log('Groups:', groups);
+    //console.log('Groups:', groups);
     // Initialize result array
     const result: { id: string; name: string; balance: number; currency: string }[] = [];
 
@@ -597,7 +629,7 @@ export const getUserGroupsWithBalance = async (userId: number): Promise<
          WHERE groupId = ? AND is_deleted = 0 AND is_settled = 0`,
         [group.id]
       );
-      console.log('Expenses:', expenses);
+    //console.log('Expenses:', expenses);
       let balance = 0;
 
       for (const expense of expenses) {
@@ -610,15 +642,15 @@ export const getUserGroupsWithBalance = async (userId: number): Promise<
           [expense.expenseId, userId, userId]
         );
 
-        console.log('Splits:', splits);
+       // console.log('Splits:', splits);
         // 4. Calculate user's share and paid amount for this expense
         splits.forEach((s) => { 
           if (s.userId === userId) {
             balance -= s.amount;
-            console.log('User owes:', s.amount);
+            //console.log('User owes:', s.amount);
           }else if (s.paid_to_user === userId) {
             balance += s.amount;
-            console.log('User is owed:', s.amount);
+           // console.log('User is owed:', s.amount);
           }
         });
         // User's net for this expense: paid - share

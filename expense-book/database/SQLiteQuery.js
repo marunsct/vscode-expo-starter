@@ -1,7 +1,7 @@
 const SQLiteQuery = [
   `CREATE TABLE IF NOT EXISTS users (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
-        userId TEXT UNIQUE,
+        userId INTEGER UNIQUE,
         username TEXT,
         first_name TEXT,
         last_name TEXT,
@@ -20,7 +20,8 @@ const SQLiteQuery = [
         first_name TEXT,
         last_name TEXT,
         email TEXT,
-        phone TEXT
+        phone TEXT,
+        profile_picture TEXT
       );`,
   `CREATE TABLE IF NOT EXISTS balance (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
