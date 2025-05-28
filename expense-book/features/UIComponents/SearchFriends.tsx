@@ -1,9 +1,10 @@
 import { Ionicons } from '@expo/vector-icons';
 import React, { useRef } from 'react';
 import { FlatList, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
-
+import { useSelector } from 'react-redux';
 interface Friend {
   id: string;
+  userId?: number; // Optional userId for the friend
   first_name?: string;
   last_name?: string;
   username?: string;
@@ -42,6 +43,7 @@ const SearchFriends: React.FC<SearchFriendsProps> = ({
   theme,
 }) => {
   const scrollRef = useRef<ScrollView | null>(null);
+  const currentUser = useSelector((state: any) => state.context.user); // Get the current user from the context
 
   return (
     <>
@@ -89,7 +91,7 @@ const SearchFriends: React.FC<SearchFriendsProps> = ({
             <View style={styles.dropdown}>
               <FlatList
                 data={searchResults.filter(
-                  (item) => !selectedFriends.some((f) => f.id === item.id)
+                  (item) => !selectedFriends.some((f) => f.id === item.id && item.userId !== currentUser.userId) // Exclude already selected friends and current user
                 ).slice(0, 4)}
                 keyExtractor={(item) => item.id}
                 renderItem={({ item }) => (

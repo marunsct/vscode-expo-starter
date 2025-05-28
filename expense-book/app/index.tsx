@@ -4,7 +4,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import * as LocalAuthentication from 'expo-local-authentication';
 import { useRouter } from 'expo-router';
 import React, { useEffect } from 'react';
-import { ActivityIndicator, Alert, StyleSheet, Text, View } from 'react-native';
+import { Alert, StyleSheet, Text, View } from 'react-native';
 import { Provider, useDispatch, useSelector } from 'react-redux';
 import ExpenseBookIcon from '../assets/images/expense-book-icon.svg'; // adjust path as needed
 import { getUser, initializeDatabase } from '../database/db';
@@ -116,7 +116,6 @@ function AppContent() {
           <ExpenseBookIcon width={96} height={96} />
           <Text style={{ marginTop: 16, fontSize: 24, fontWeight: 'bold' }}>Expense Book</Text>
           <HalfColorSpinner size={48} />
-          <ActivityIndicator size="large" color="#2196F3" />
         </View>
       </View>
     </LinearGradient>

@@ -9,7 +9,7 @@ export default function Account() {
     const theme = useTheme(); // Access the theme
   const handleLogout = async () => {
     router.replace('/login'); // Redirect to login screen
-    removeToken(); // Clear the token
+   await removeToken(); // Clear the token
    await clearUserData(); // Clear user data from the database
    //await deleteAllTables(); // Delete all tables from the database
     // Redirect to login screen

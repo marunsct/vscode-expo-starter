@@ -184,6 +184,13 @@ export default function AddExpenseModal() {
     }, 300);
   }, []);
 
+  useEffect(() => {
+
+    if (contributors.length === 1) {
+      setContributors([{ ...currentUser, amount: amount }]); // Initialize with current user if no contributors
+    }
+  }, [amount]);
+
   // Search friends when 3+ chars
   useEffect(() => {
     if (search.length >= 3) {
@@ -210,11 +217,12 @@ export default function AddExpenseModal() {
   }
 
   const handleSelectFriend: HandleSelectFriend = (friend) => {
-    if (!selectedFriends.some((f: Friend) => f.id === friend.id)) {
+    if (!selectedFriends.some((f: Friend) => f.userId === friend.userId)) {
       setSelectedFriends([...selectedFriends, friend]);
       console.log('Selected friends:', selectedFriends);
     }
     setSearch('');
+    setParticipants([]);
     setShowDropdown(false);
     setTimeout(() => inputRef.current?.focus(), 100);
   };
@@ -227,6 +235,7 @@ export default function AddExpenseModal() {
   // Handle group selection
   const handleGroupSelect = (group: Group) => {
     try {
+      setParticipants([]);
       console.log('Selecting group members:', parseInt(group.id))
       getGroupMembers(parseInt(group.id)).then((members) => {
         setSelectedGroupMembers(members);
@@ -238,8 +247,10 @@ export default function AddExpenseModal() {
   };
   // Remove group token handler
   const handleRemoveGroup = () => {
+    console.log('Removing group token');
     setSelectedGroup(null);
     setSelectedGroupMembers([]);
+    setParticipants([]);
   };
 
   interface HandleRemoveFriend {
@@ -249,10 +260,11 @@ export default function AddExpenseModal() {
   const handleRemoveFriend: HandleRemoveFriend = (id) => {
     // If the id matches the group token, remove the group
     if (selectedGroup && id === `group-${selectedGroup.id}`) {
-      setSelectedGroup(null);
+      handleRemoveGroup();
       return;
     }
     setSelectedFriends(selectedFriends.filter((f) => f.id !== id));
+    setParticipants([]);
   };
 
   const handleSave = () => {
@@ -271,7 +283,9 @@ export default function AddExpenseModal() {
       alert('Please select at least one friend to split the expense with.'); // Show an alert or some other feedback
       return;
     }
+    console.log('checking participants', participants.length, contributors.length, selectedFriends.length, selectedGroupMembers.length);
     if (participants.length === 0) {
+      console.log('preparing participants', contributors.length, selectedFriends.length, selectedGroupMembers.length);
       const combined = [
         ...contributors,
         ...selectedFriends,
