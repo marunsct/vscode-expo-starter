@@ -73,7 +73,7 @@ const EqualSplitView: React.FC<EqualSplitViewProps> = ({
 };
 
 const styles = StyleSheet.create({
-  content: { width: '100%', backgroundColor: '#fff', borderRadius: 16, padding: 16, marginBottom: 10, paddingBottom: 20, maxHeight: '90%', marginTop: 2 },
+  content: { width: '100%', backgroundColor: '#fff', borderRadius: 16, padding: 16, marginBottom: 10, paddingBottom: 20, maxHeight: '100%', marginTop: 2 },
   contentContainer: { paddingBottom: 20 },
   item: { flexDirection: 'row', alignItems: 'center', marginVertical: 10 },
   avatar: { width: 36, height: 36, borderRadius: 18, marginRight: 12 },

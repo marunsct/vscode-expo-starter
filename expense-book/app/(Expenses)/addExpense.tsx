@@ -58,7 +58,7 @@ type ContextExpense = {
   contributors: Friend[];
 };
 
-export default function AddExpenseModal() {
+export default function AddExpense() {
   const router = useRouter();
   const theme = useTheme();
   const dispatch = useDispatch()

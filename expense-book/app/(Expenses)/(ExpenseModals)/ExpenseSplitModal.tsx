@@ -1,6 +1,6 @@
 import { Ionicons } from '@expo/vector-icons';
 import React, { useState } from 'react';
-import { FlatList, Image, Modal, Platform, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import { FlatList, Image, KeyboardAvoidingView, Modal, Platform, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 
 import CustomSplitView from './CustomSplitView';
 import EqualSplitView from './EqualSplitView';
@@ -52,7 +52,6 @@ const ExpenseSplitModal: React.FC<ExpenseSplitModalProps> = ({
   const [multipleMode, setMultipleMode] = useState(false);
   const [selectedMultiple, setSelectedMultiple] = useState<string[]>([]);
   const [selectedSplit, setSelectedSplit] = useState<'equal' | 'parts' | 'percentage' | 'custom'>('equal');
-  const [splitModalType, setSplitModalType] = useState<'equal' | 'parts' | 'percentage' | 'custom' | null>(null);
   // State for EqualSplitView selection
   const [selectedFriends, setSelectedFriends] = useState<Friend[]>(participants);
 
@@ -135,7 +134,6 @@ const ExpenseSplitModal: React.FC<ExpenseSplitModalProps> = ({
   const handleSplitPress = (type: 'equal' | 'parts' | 'percentage' | 'custom') => {
     setSelectedSplit(type);
     setSplit(type);
-    setSplitModalType(type);
   };
 
   // Handler for Select All button
@@ -147,187 +145,232 @@ const ExpenseSplitModal: React.FC<ExpenseSplitModalProps> = ({
     }
   };
 
+  const handleModalSave = () => {
+    // 1. Only one contributor and one selected user, and both have the same userId
+    if (
+      contributors.length === 1 &&
+      selectedFriends.length === 1 &&
+      contributors[0].userId === selectedFriends[0].userId
+    ) {
+      alert('Enter at least one user to split the expense.');
+      return;
+    }
+
+    // 2. Percentage split: sum of counter must be 100.00
+    if (selectedSplit === 'percentage') {
+      const totalPercentage = selectedFriends.reduce((sum, f) => sum + (Number(f.counter) || 0), 0);
+      if (Math.abs(totalPercentage - 100) > 0.01) {
+        alert('The total percentage must be exactly 100%. Please enter correct values.');
+        return;
+      }
+    }
+
+    // 3. Custom split: sum of amount must equal the entered amount
+    if (selectedSplit === 'custom') {
+      const totalCustom = selectedFriends.reduce((sum, f) => sum + (Number(f.amount) || 0), 0);
+      if (Math.abs(totalCustom - Number(amount)) > 0.01) {
+        alert('The sum of all custom amounts must equal the total expense amount.');
+        return;
+      }
+    }
+    setNewParticipants(selectedFriends);
+    // If all validations pass, proceed
+    onSave();
+  }
+
   return (
     <Modal visible={visible} animationType="slide" transparent>
       <View style={styles.fullScreenOverlay}>
-        <View style={styles.modalContent}>
-          {/* Header Bar */}
+        <View style={[styles.modalContent, { flex: 1, paddingBottom: 0 }]}>
+          {/* Header Bar - fixed */}
           <View style={styles.headerBar}>
             <TouchableOpacity onPress={onClose} style={styles.headerIcon}>
               <Ionicons name="close" size={28} color="#222" />
             </TouchableOpacity>
             <Text style={styles.headerTitle}>Expense Splits</Text>
-            <TouchableOpacity onPress={onSave} style={styles.headerIcon}>
+            <TouchableOpacity onPress={handleModalSave} style={styles.headerIcon}>
               <Text style={styles.saveText}>Save</Text>
             </TouchableOpacity>
           </View>
-          <View style={{ minHeight: '86%' }}>
-            <View style={{  flexDirection: 'column', minHeight:'20%', maxHeight: '35%', marginBottom: 5 }}>
-              {/* Paid by Title and Total */}
-              <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginTop: 5, marginBottom: 5, marginHorizontal: 5 }}>
-                <Text style={styles.sectionTitle}>Paid by :</Text>
-                <Text
-                  style={{
-                    fontSize: 12,
-                    color: isOver ? '#e53935' : '#888',
-                    fontWeight: 'bold',
-                  }}
-                >
-                  Left: {remainingAmount} of {amount}
-                </Text>
-              </View>
-              {/* List Items for contributors */}
-              <ScrollView style={{ marginBottom: 5 }}>
-                {contributors.map((contributor, idx) => (
-                  <View style={styles.listItem} key={contributor.id}>
-                    <TouchableOpacity
-                      style={{ flexDirection: 'row', alignItems: 'center' }}
-                      onPress={() => handleContributorPress(contributor)}
-                      activeOpacity={0.7}
-                    >
-                      {contributor.profile_image ? (
-                        <Image source={{ uri: contributor.profile_image }} style={styles.avatar} />
-                      ) : (
-                        <View style={styles.avatarPlaceholder}>
-                          <Text style={styles.avatarText}>
-                            {contributor.first_name?.[0]?.toUpperCase() ?? contributor.username?.[0]?.toUpperCase() ?? '?'}
-                          </Text>
-                        </View>
-                      )}
-                      <Text style={styles.nameText}>
-                        {contributor.first_name ?? contributor.username}
-                      </Text>
-                    </TouchableOpacity>
-                    <View style={{ flex: 1 }} />
-                    <View style={{ flexDirection: 'row', alignItems: 'center', minWidth: 80 }}>
-                      <Text style={styles.currencyText}>{currency}</Text>
-                      <TextInput
-                        style={{
-                          borderBottomWidth: 1,
-                          borderColor: '#ccc',
-                          fontSize: 16,
-                          minWidth: 80,
-                          textAlign: 'right',
-                          marginRight: 4,
-                          padding: 0,
-                          backgroundColor: 'transparent',
-                        }}
-                        keyboardType="numeric"
-                        value={contributor.amount !== undefined ? String(contributor.amount) : ''}
-                        onChangeText={(text) => {
-                          const updated = contributors.map((c, i) =>
-                            i === idx
-                              ? { ...c, amount: text === '' ? undefined : Number(text.replace(/[^0-9.]/g, '')) }
-                              : c
-                          );
-                          setNewContributors(updated);
-                        }}
-                        placeholder="0"
-                      />
 
-                    </View>
-                  </View>
-                ))}
-              </ScrollView>
-            </View>
-            {/* Add Split type Buttons */}
-            <View
-              style={{
-                borderBottomColor: '#eee',
-                borderBottomWidth: 1,
-                flexDirection: 'row',
-                alignItems: 'center',
-                justifyContent: 'space-between',
-                paddingHorizontal: 20,
-                paddingVertical: 15,
-                backgroundColor: 'rgba(237, 253, 253, 0.47)',
-              }}
-            >
-              {[
-                { type: 'equal', icon: 'reorder-four', label: 'Equal', color: '#2196F3' },
-                { type: 'parts', icon: 'bar-chart', label: 'Shares', color: '#4CAF50' },
-                { type: 'percentage', icon: 'pricetag', label: 'Percent', color: '#FF9800' },
-                { type: 'custom', icon: 'options', label: 'Custom', color: '#9C27B0' },
-              ].map(({ type, icon, label, color }) => {
-                const isSelected = selectedSplit === type;
-                return (
-                  <TouchableOpacity
-                    key={type}
-                    onPress={() => handleSplitPress(type as any)}
-                    style={{
-                      alignItems: 'center',
-                      padding: 2,
-                      borderRadius: 10,
-                      backgroundColor: isSelected ? color : 'transparent',
-                      //borderWidth: isSelected ? 2 : 1,
-                      borderColor: isSelected ? color : '#ddd',
-                      minWidth: 55,
-                    }}
-                  >
-                    <Ionicons
-                      name={icon as any}
-                      size={28}
-                      color={isSelected ? '#fff' : color}
-                    />
+          {/* Content Area + Footer - both move up with keyboard */}
+          <KeyboardAvoidingView
+            style={{ flex: 1 }}
+            behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+            keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 0}
+          >
+            <View style={{ flex: 1 }}>
+              <View style={{ flex: 1 }}>
+                <View style={{ flexDirection: 'column', minHeight: '15%', maxHeight: '35%', marginBottom: 5 }}>
+                  {/* Paid by Title and Total */}
+                  <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginTop: 5, marginBottom: 5, marginHorizontal: 5 }}>
+                    <Text style={styles.sectionTitle}>Paid by :</Text>
                     <Text
                       style={{
                         fontSize: 12,
-                        color: isSelected ? '#fff' : color,
-                        marginTop: 2,
-                        fontWeight: isSelected ? 'bold' : 'normal',
+                        color: isOver ? '#e53935' : '#888',
+                        fontWeight: 'bold',
                       }}
                     >
-                      {label}
+                      Left: {remainingAmount} of {amount}
                     </Text>
-                  </TouchableOpacity>
-                );
-              })}
-            </View>
-            <View style={{ flex: 1 }}>
-              {
-                (selectedSplit === 'equal') &&
-                (<EqualSplitView
-                  participants={participants}
-                  selectedIds={selectedFriends}
-                  setSelectedIds={setSelectedFriends}
-                />)
-              }
-              {
-                (selectedSplit === 'parts') && (
-                  <PartsSplitView participants={participants} setSelectedIds={setSelectedFriends} />
-                )
-              }
-              {
-                (selectedSplit === 'percentage') && (
-                  <PercentageSplitView participants={participants} />
-                )
-              }
-              {
-                (selectedSplit === 'custom') && (
-                  <CustomSplitView participants={participants} />
-                )
-              }
-            </View>
-          </View>
-          {/* Footer Bar */}
-          <View style={[styles.footerBar]}>
+                  </View>
+                  {/* List Items for contributors */}
+                  <ScrollView style={{ marginBottom: 5 }}>
+                    {contributors.map((contributor, idx) => (
+                      <View style={styles.listItem} key={contributor.id}>
+                        <TouchableOpacity
+                          style={{ flexDirection: 'row', alignItems: 'center' }}
+                          onPress={() => handleContributorPress(contributor)}
+                          activeOpacity={0.7}
+                        >
+                          {contributor.profile_image ? (
+                            <Image source={{ uri: contributor.profile_image }} style={styles.avatar} />
+                          ) : (
+                            <View style={styles.avatarPlaceholder}>
+                              <Text style={styles.avatarText}>
+                                {contributor.first_name?.[0]?.toUpperCase() ?? contributor.username?.[0]?.toUpperCase() ?? '?'}
+                              </Text>
+                            </View>
+                          )}
+                          <Text style={styles.nameText}>
+                            {contributor.first_name ?? contributor.username}
+                          </Text>
+                        </TouchableOpacity>
+                        <View style={{ flex: 1 }} />
+                        <View style={{ flexDirection: 'row', alignItems: 'center', minWidth: 80 }}>
+                          <Text style={styles.currencyText}>{currency}</Text>
+                          <TextInput
+                            style={{
+                              borderBottomWidth: 1,
+                              borderColor: '#ccc',
+                              fontSize: 16,
+                              minWidth: 80,
+                              textAlign: 'right',
+                              marginRight: 4,
+                              padding: 0,
+                              backgroundColor: 'transparent',
+                            }}
+                            keyboardType="numeric"
+                            value={contributor.amount !== undefined ? String(contributor.amount) : ''}
+                            onChangeText={(text) => {
+                              const updated = contributors.map((c, i) =>
+                                i === idx
+                                  ? { ...c, amount: text === '' ? undefined : Number(text.replace(/[^0-9.]/g, '')) }
+                                  : c
+                              );
+                              setNewContributors(updated);
+                            }}
+                            placeholder="0"
+                          />
 
-            <View style={{ flex: 1, maxWidth: 200, alignItems: 'baseline', justifyContent: 'center', marginLeft: 24, marginTop: 8 }}>
-              <Text style={styles.footerText}>
-                {selectedSplit === 'equal' && 'Expense : ' + perUserAmount + ' per User'}
-                {selectedSplit === 'parts' && 'Total Shares : ' + totalShares}
-                {selectedSplit === 'percentage' && ' ' + totalPercentage + '% of 100% Left'}
-                {selectedSplit === 'custom' && 'Total Amount : ' + totalCustom}
-              </Text>
+                        </View>
+                      </View>
+                    ))}
+                  </ScrollView>
+                </View>
+                {/* Add Split type Buttons */}
+                <View
+                  style={{
+                    borderBottomColor: '#eee',
+                    borderBottomWidth: 1,
+                    flexDirection: 'row',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    paddingHorizontal: 20,
+                    paddingVertical: 10,
+                    backgroundColor: 'rgba(246, 253, 203, 0.26)',
+                  }}
+                >
+                  {[
+                    { type: 'equal', icon: 'reorder-four', label: 'Equal', color: '#2196F3' },
+                    { type: 'parts', icon: 'bar-chart', label: 'Shares', color: '#4CAF50' },
+                    { type: 'percentage', icon: 'pricetag', label: 'Percent', color: '#FF9800' },
+                    { type: 'custom', icon: 'options', label: 'Custom', color: '#9C27B0' },
+                  ].map(({ type, icon, label, color }) => {
+                    const isSelected = selectedSplit === type;
+                    return (
+                      <TouchableOpacity
+                        key={type}
+                        onPress={() => handleSplitPress(type as any)}
+                        style={{
+                          alignItems: 'center',
+                          padding: 2,
+                          borderRadius: 10,
+                          backgroundColor: isSelected ? color : 'transparent',
+                          //borderWidth: isSelected ? 2 : 1,
+                          borderColor: isSelected ? color : '#ddd',
+                          minWidth: 50,
+                          minHeight: 40,
+                        }}
+                      >
+                        <Ionicons
+                          name={icon as any}
+                          size={20}
+                          color={isSelected ? '#fff' : color}
+                        />
+                        <Text
+                          style={{
+                            fontSize: 10,
+                            color: isSelected ? '#fff' : color,
+                            marginTop: 2,
+                            fontWeight: isSelected ? 'bold' : 'normal',
+                          }}
+                        >
+                          {label}
+                        </Text>
+                      </TouchableOpacity>
+                    );
+                  })}
+                </View>
+                <View style={{ flex: 1 }}>
+                  {
+                    (selectedSplit === 'equal') &&
+                    (<EqualSplitView
+                      participants={participants}
+                      selectedIds={selectedFriends}
+                      setSelectedIds={setSelectedFriends}
+                    />)
+                  }
+                  {
+                    (selectedSplit === 'parts') && (
+                      <PartsSplitView participants={participants} setSelectedIds={setSelectedFriends} />
+                    )
+                  }
+                  {
+                    (selectedSplit === 'percentage') && (
+                      <PercentageSplitView participants={participants} setSelectedIds={setSelectedFriends} />
+                    )
+                  }
+                  {
+                    (selectedSplit === 'custom') && (
+                      <CustomSplitView participants={participants} setSelectedIds={setSelectedFriends} currency={currency} />
+                    )
+                  }
+                </View>
+              </View>
             </View>
-            {selectedSplit === 'equal' && (<TouchableOpacity style={styles.selectAllButton} onPress={handleSelectAll}>
-              <Ionicons name={selectAll ? 'checkbox' : 'square-outline'} size={22} color="#2196F3" />
-              <Text style={styles.selectAllText}>Select All</Text>
-            </TouchableOpacity>)}
 
-          </View>
+
+            {/* Footer Bar - now inside KeyboardAvoidingView */}
+            <View style={styles.footerBar}>
+              <View style={{ flex: 1, maxWidth: 300, alignItems: 'baseline', justifyContent: 'center', marginLeft: 24, marginTop: 8 }}>
+                <Text style={styles.footerText}>
+                  {selectedSplit === 'equal' && 'Expense : ' + perUserAmount + ' per User'}
+                  {selectedSplit === 'parts' && 'Total Shares : ' + totalShares}
+                  {selectedSplit === 'percentage' && 'Percentage: ' + totalPercentage + '% of 100% Left'}
+                  {selectedSplit === 'custom' && 'Total Amount : ' + totalCustom}
+                </Text>
+              </View>
+              {selectedSplit === 'equal' && (
+                <TouchableOpacity style={styles.selectAllButton} onPress={handleSelectAll}>
+                  <Ionicons name={selectAll ? 'checkbox' : 'square-outline'} size={22} color="#2196F3" />
+                  <Text style={styles.selectAllText}>Select All</Text>
+                </TouchableOpacity>
+              )}
+            </View>
+          </KeyboardAvoidingView>
         </View>
-
         {/* Participant Selection Modal */}
         <Modal visible={showParticipantModal} animationType="slide" transparent>
           <View style={styles.fullScreenOverlay}>
@@ -522,16 +565,13 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    position: 'absolute',
-    left: 0,
-    right: 0,
-    bottom: 0,
+
     backgroundColor: '#fff',
     borderTopWidth: 1,
     borderTopColor: '#eee',
     paddingTop: 12,
-    paddingBottom: Platform.OS === 'ios' ? 8 : 8,
-    zIndex: 100,
+    paddingBottom: Platform.OS === 'ios' ? 15 : 10,
+
     minHeight: 70,
 
   },
@@ -547,7 +587,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingHorizontal: 12,
     paddingVertical: 4,
-    marginRight: 12,
+    marginRight: 8,
     //borderWidth: 1,
     //borderColor: '#2196F3',
   },

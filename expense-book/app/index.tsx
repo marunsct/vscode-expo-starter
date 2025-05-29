@@ -114,7 +114,7 @@ function AppContent() {
       <View style={styles.loadingContainer}>
         <View style={styles.container}>
           <ExpenseBookIcon width={96} height={96} />
-          <Text style={{ marginTop: 16, fontSize: 24, fontWeight: 'bold' }}>Expense Book</Text>
+          <Text style={{ marginTop: 16, fontSize: 24, fontWeight: 'bold', marginBottom: 25 }}>Expense Book</Text>
           <HalfColorSpinner size={48} />
         </View>
       </View>
